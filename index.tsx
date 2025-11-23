@@ -41,6 +41,7 @@ import {
   Table,
   RotateCcw
 } from 'lucide-react';
+import './index.css';
 
 // --- Types & Constants ---
 

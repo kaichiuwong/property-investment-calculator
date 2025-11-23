@@ -1,4 +1,4 @@
-# Property Investment Calculator
+# Property Calculator
 
 A React-based web application for analyzing Australian property investments. Features real-time cash flow analysis, rental yield estimations using Gemini AI, and 30-year financial projections.
 
@@ -13,52 +13,34 @@ A React-based web application for analyzing Australian property investments. Fea
 
 ## Development Setup
 
-This project is built using React and TypeScript.
-
 ### Prerequisites
 
 *   Node.js (v18 or higher)
-*   npm or yarn
 
 ### Installation
 
-1.  Clone the repository or download the source code.
+1.  Clone the repository.
 2.  Install dependencies:
     ```bash
     npm install
     ```
-
-### Running Locally
-
-To run the application locally, you can use a development server like Vite.
-
-1.  Initialize a new Vite project (if not already set up):
-    ```bash
-    npm create vite@latest my-app -- --template react-ts
-    ```
-2.  Move the provided `index.tsx` and `index.html` into the project (adjusting paths as necessary, e.g., move `index.tsx` to `src/main.tsx` or similar depending on Vite config).
 3.  Start the development server:
     ```bash
     npm run dev
     ```
 
-**Note**: The provided code uses CDN imports in `index.html` for a standalone environment. For a standard local development environment, you should install the packages via npm:
-
-```bash
-npm install react react-dom lucide-react recharts @google/genai
-```
-
-And remove the `<script type="importmap">` block from `index.html`.
-
-## Deployment
-
-### Deploying to Netlify/Vercel
-
-1.  Push your code to a GitHub repository.
-2.  Connect your repository to Vercel or Netlify.
-3.  Set the `API_KEY` environment variable in the deployment settings for the Google Gemini API integration.
-4.  The platform will automatically detect the React build settings (e.g., `vite build`).
-
 ### Environment Variables
 
-*   `API_KEY`: Required for AI Rental Estimation and Investment Analysis features. Obtain one from [Google AI Studio](https://aistudio.google.com/).
+Create a `.env` file in the root directory:
+
+```
+API_KEY=your_google_gemini_api_key
+```
+
+## Deployment on Vercel
+
+1.  Push the code to a GitHub repository.
+2.  Import the project into Vercel.
+3.  Vercel will automatically detect the Vite framework.
+4.  Add your `API_KEY` in the Vercel **Settings > Environment Variables** section.
+5.  Deploy.
