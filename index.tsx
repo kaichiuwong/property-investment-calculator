@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -556,7 +557,9 @@ const App = () => {
   // Initialize Suburbs from Hardcoded List
   useEffect(() => {
       const parsed = SUBURB_DB_RAW.map(entry => {
-          const [name, state, postcode] = entry.split('|');
+          const [name, state, rawPcode] = entry.split('|');
+          // Ensure postcode is 4 digits (pad with leading zeros)
+          const postcode = rawPcode.padStart(4, '0');
           return { name, state, postcode };
       });
       setAllSuburbs(parsed);
@@ -1441,7 +1444,7 @@ const App = () => {
           </div>
 
           {/* Results Column */}
-          <div className="lg:col-span-8 space-y-6 print:break-inside-avoid">
+          <div className="lg:col-span-8 space-y-6">
 
              {/* Time Travel Slider - Floating Card UI */}
              <div className="sticky top-4 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-4 mb-6 mx-4 md:mx-0 print:hidden">
@@ -1640,7 +1643,7 @@ const App = () => {
 
               {/* Cash Flow Chart Container */}
               <div 
-                className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} w-full mb-8 print:mb-12`}
+                className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`}
                 style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
               >
                 <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
@@ -1656,7 +1659,7 @@ const App = () => {
 
               {/* Wealth Chart Container */}
               <div 
-                className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} w-full mb-8 print:mb-12`}
+                className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`}
                 style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
               >
                 <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
@@ -1696,7 +1699,7 @@ const App = () => {
         </div>
         
         {/* Footer with Disclaimer & Copyright */}
-        <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800 print:mt-8 print:border-t print:border-gray-300 print:break-inside-avoid">
+        <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800 print:mt-auto print:border-t print:border-gray-300 print:break-inside-avoid">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400 print:text-gray-600">
                  <div className="max-w-4xl text-center md:text-left">
                     <p>
