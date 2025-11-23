@@ -679,7 +679,7 @@ const App = () => {
       setTimeout(() => {
           window.print();
           setIsPrinting(false);
-      }, 500);
+      }, 1000);
   };
 
   useEffect(() => {
