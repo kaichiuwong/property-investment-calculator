@@ -268,7 +268,7 @@ const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { b
 // Displays comma-separated values (e.g. 850,000) when not focused,
 // and reverts to standard number input when editing for better UX/Mobile support.
 // Also supports step via arrow keys.
-const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholder, icon: Icon, ...props }: any) => {
+const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholder, icon: Icon, min, max, ...props }: any) => {
   // We keep internal string state to allow "unformatted" editing
   const [inputValue, setInputValue] = useState<string>("");
   const [isFocused, setIsFocused] = useState(false);
@@ -290,13 +290,32 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
   const handleBlur = () => {
     setIsFocused(false);
     // Formatting happens in useEffect due to dependency on isFocused
+    // Validation on Blur
+    let val = Number(inputValue.replace(/,/g, ''));
+    let newVal = val;
+    if (min !== undefined && val < min) newVal = min;
+    if (max !== undefined && val > max) newVal = max;
+    
+    if (newVal !== val) {
+        onChange(newVal);
+        setInputValue(newVal.toString()); // Update visual immediately
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/,/g, '');
-    if (raw === '' || !isNaN(Number(raw))) {
+    if (raw === '') {
+         setInputValue('');
+         onChange(0);
+         return;
+    }
+
+    if (!isNaN(Number(raw))) {
+        // Prevent negative inputs immediately during typing
+        if (Number(raw) < 0) return;
+
         setInputValue(e.target.value);
-        onChange(raw === '' ? 0 : Number(raw));
+        onChange(Number(raw));
     }
   };
 
@@ -305,7 +324,11 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
           e.preventDefault();
           const current = Number(inputValue.replace(/,/g, '') || 0);
           const delta = e.key === 'ArrowUp' ? step : -step;
-          const next = Math.max(0, current + delta);
+          let next = current + delta;
+          
+          if (min !== undefined) next = Math.max(min, next);
+          if (max !== undefined) next = Math.min(max, next);
+          
           setInputValue(next.toString());
           onChange(next);
       }
@@ -316,7 +339,7 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
         {Icon && <Icon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none z-10" />}
         <input
             type="text" // Using text to allow commas
-            inputMode="numeric" // Helps mobile keyboards
+            inputMode="decimal" // Helps mobile keyboards
             className={className}
             value={inputValue}
             onChange={handleChange}
@@ -384,9 +407,10 @@ interface ExpenseSliderRowProps {
 }
 
 const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onReset, max }: ExpenseSliderRowProps) => {
-    // Ensure slider scale accommodates the current value if it exceeds the default max
-    const dynamicMax = Math.max(max, typeof value === 'number' ? value * 1.5 : max);
-
+    // Dynamic max logic removed as per user request to uncap input but strictly cap to Purchase Price
+    // But user also said "max value is not capped at this moment. Please fix." 
+    // So we pass the strict max to input and range.
+    
     return (
         <div className="mb-4 last:mb-0">
             <div className="flex justify-between items-center mb-1">
@@ -408,9 +432,9 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
                  <input 
                     type="range" 
                     min="0" 
-                    max={dynamicMax}
+                    max={max}
                     className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    value={value || 0}
+                    value={Math.min(value, max) || 0}
                     onChange={(e) => onChange(Number(e.target.value))}
                 />
                 <div className="w-24">
@@ -418,6 +442,8 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
                         className={`w-full px-2 py-1 text-right text-sm border rounded-md bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
                         value={value}
                         onChange={onChange}
+                        max={max}
+                        min={0}
                     />
                 </div>
             </div>
@@ -533,6 +559,10 @@ const App = () => {
     // If user manually changes a calculated field, mark it as overridden
     if (['landValue', 'councilRates', 'insurance', 'bodyCorp', 'landTax', 'capitalGrowth'].includes(field)) {
         setOverrides(prev => ({ ...prev, [field]: true }));
+    }
+    // Prevent negative numbers on basic change handler
+    if (typeof value === 'number') {
+        value = Math.max(0, value);
     }
     setData(prev => ({ ...prev, [field]: value }));
   };
@@ -798,6 +828,7 @@ const App = () => {
   const currentGrossYield = currentStats.value > 0 ? (currentStats.rentalIncome / currentStats.value) * 100 : 0;
 
   // Calculate Building Value for max limits
+  // NOTE: User requested max to be 100% of Purchase Price, so we use data.price for caps instead of buildingValue.
   const buildingValue = Math.max(0, data.price - data.landValue);
 
   const fetchAiAnalysis = async () => {
@@ -860,7 +891,7 @@ const App = () => {
               <Calculator className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Property Calculator</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Property Calculator <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">(AUD)</span></h1>
             </div>
           </div>
           <div className="flex items-center gap-3 self-end md:self-auto">
@@ -1013,6 +1044,7 @@ const App = () => {
                       value={data.price}
                       onChange={(val: number) => handleInputChange('price', val)}
                       icon={DollarSign}
+                      min={0}
                   />
                 </div>
 
@@ -1032,6 +1064,8 @@ const App = () => {
                         value={data.landValue}
                         onChange={(val: number) => handleInputChange('landValue', val)}
                         icon={LandPlot}
+                        min={0}
+                        max={data.price}
                     />
                 </div>
               </div>
@@ -1053,6 +1087,8 @@ const App = () => {
                       className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                       value={data.lvr}
                       onChange={(e) => handleInputChange('lvr', Number(e.target.value))}
+                      min={0}
+                      max={100}
                     />
                   </div>
                   <div>
@@ -1063,6 +1099,8 @@ const App = () => {
                       className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                       value={data.interestRate}
                       onChange={(e) => handleInputChange('interestRate', Number(e.target.value))}
+                      min={0}
+                      max={200}
                     />
                   </div>
                 </div>
@@ -1109,6 +1147,8 @@ const App = () => {
                                 value={data.weeklyRent}
                                 onChange={(val: number) => handleInputChange('weeklyRent', val)}
                                 step={10}
+                                min={0}
+                                max={10000}
                             />
                         </div>
                   </div>
@@ -1133,6 +1173,7 @@ const App = () => {
                                 className={`w-full px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
                                 value={data.councilRates}
                                 onChange={(val: number) => handleInputChange('councilRates', val)}
+                                min={0}
                             />
                         </div>
                         <div>
@@ -1144,6 +1185,7 @@ const App = () => {
                                 className={`w-full px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
                                 value={data.landTax}
                                 onChange={(val: number) => handleInputChange('landTax', val)}
+                                min={0}
                             />
                         </div>
                     </div>
@@ -1155,7 +1197,7 @@ const App = () => {
                         onChange={(val) => handleInputChange('insurance', val)}
                         isOverridden={!!overrides.insurance}
                         onReset={() => handleResetOverride('insurance')}
-                        max={buildingValue}
+                        max={data.price}
                     />
 
                     <ExpenseSliderRow 
@@ -1165,7 +1207,7 @@ const App = () => {
                         onChange={(val) => handleInputChange('bodyCorp', val)}
                         isOverridden={!!overrides.bodyCorp}
                         onReset={() => handleResetOverride('bodyCorp')}
-                        max={buildingValue}
+                        max={data.price}
                     />
 
                     <ExpenseSliderRow 
@@ -1181,7 +1223,7 @@ const App = () => {
                         infoText="Annual allowance for repairs. Inflates annually."
                         value={data.maintenance}
                         onChange={(val) => handleInputChange('maintenance', val)}
-                        max={buildingValue}
+                        max={data.price}
                     />
                     
                     <div className="mt-4">
@@ -1498,14 +1540,20 @@ const App = () => {
           </div>
         </div>
         
-        {/* Footer with Disclaimer */}
-        <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800 text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400 max-w-4xl mx-auto">
-                Disclaimer: This calculator is for educational and estimation purposes only. It does not constitute financial advice. 
-                Results are based on user inputs and simplified assumptions (e.g., constant inflation, standard tax rates). 
-                Actual outcomes will vary. Please consult with a qualified financial advisor, mortgage broker, or accountant before making any investment decisions. 
-                Always refer to actual sales reports and official statistical data sources for accurate market information.
-            </p>
+        {/* Footer with Disclaimer & Copyright */}
+        <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                 <div className="max-w-4xl text-center md:text-left">
+                    <p>
+                        Disclaimer: This calculator is for educational and estimation purposes only. It does not constitute financial advice. 
+                        Results are based on user inputs and simplified assumptions. Actual outcomes will vary. 
+                        Please consult with a qualified financial advisor before making decisions.
+                    </p>
+                </div>
+                <div className="whitespace-nowrap font-medium">
+                    &copy; {new Date().getFullYear()} Property Calculator. All rights reserved.
+                </div>
+            </div>
         </footer>
 
       </div>
