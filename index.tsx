@@ -814,6 +814,16 @@ const App = () => {
     return proj;
   }, [data, loanAmount, annualRepayment]);
 
+  const positiveCashFlowYear = useMemo(() => {
+    const match = projections.find(p => p.netCashFlow > 0);
+    return match ? match.year : null;
+  }, [projections]);
+
+  const equityCrossesPriceYear = useMemo(() => {
+    const match = projections.find(p => p.equity >= data.price);
+    return match ? match.year : null;
+  }, [projections, data.price]);
+
   const currentStats = projections[viewYear];
   const weeklyCashFlow = currentStats.netCashFlow / 52;
   const currentGrossYield = currentStats.value > 0 ? (currentStats.rentalIncome / currentStats.value) * 100 : 0;
@@ -905,6 +915,19 @@ const App = () => {
         />
         <Legend />
         <ReferenceLine y={0} stroke={darkMode ? "#e5e7eb" : "#000"} strokeWidth={2} />
+        {positiveCashFlowYear !== null && (
+            <ReferenceLine
+                x={positiveCashFlowYear}
+                stroke="#10b981"
+                strokeDasharray="3 3"
+                label={{
+                    value: `Pos. Cash Flow (Yr ${positiveCashFlowYear})`,
+                    position: 'insideTopRight',
+                    fill: '#10b981',
+                    fontSize: 12,
+                }}
+            />
+        )}
         <Area type="monotone" dataKey="rentalIncome" name="Rental Income" stroke="#10b981" strokeWidth={2} fill="url(#colorIncome)" />
         <Area type="monotone" dataKey="expenses" name="Total Expenses" stroke="#f59e0b" strokeWidth={2} fill="url(#colorExpenses)" />
         <Area type="monotone" dataKey="netCashFlow" name="Net Cash Flow" stroke="#6366f1" strokeWidth={2} fill="url(#colorNet)" />
@@ -945,7 +968,30 @@ const App = () => {
             position={isMobile ? { y: 0 } : undefined}
         />
         <Legend />
-        <ReferenceLine y={data.price} stroke="#9ca3af" strokeDasharray="3 3" label={{ value: "Purchase Price", position: 'insideTopLeft', fill: darkMode ? "#9ca3af" : "#6b7280", fontSize: 10 }} />
+        <ReferenceLine 
+            y={data.price} 
+            stroke="#9ca3af" 
+            strokeDasharray="3 3" 
+            label={{ 
+                value: `Purchase Price ($${(data.price / 1000).toFixed(0)}k)`, 
+                position: 'insideTopLeft', 
+                fill: darkMode ? "#9ca3af" : "#6b7280", 
+                fontSize: 10 
+            }} 
+        />
+        {equityCrossesPriceYear !== null && (
+            <ReferenceLine
+                x={equityCrossesPriceYear}
+                stroke="#10b981"
+                strokeDasharray="3 3"
+                label={{
+                    value: `Equity > Price (Yr ${equityCrossesPriceYear})`,
+                    position: 'insideTopRight',
+                    fill: '#10b981',
+                    fontSize: 12,
+                }}
+            />
+        )}
         <Area type="monotone" dataKey="value" name="Property Value" stroke="#3b82f6" fillOpacity={1} fill="url(#colorValue)" strokeWidth={2} />
         <Area type="monotone" dataKey="loan" name="Loan Balance" stroke="#ef4444" fillOpacity={1} fill="url(#colorLoan)" strokeWidth={2} />
         <Line type="monotone" dataKey="equity" name="Equity" stroke="#10b981" strokeWidth={3} dot={false} />
