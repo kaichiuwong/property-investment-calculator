@@ -1172,7 +1172,7 @@ const App = () => {
                         onChange={(val) => handleInputChange('insurance', val)}
                         isOverridden={!!overrides.insurance}
                         onReset={() => handleResetOverride('insurance')}
-                        max={data.price}
+                        max={Math.round(data.price * 0.1)}
                     />
 
                     <ExpenseSliderRow 
@@ -1182,7 +1182,7 @@ const App = () => {
                         onChange={(val) => handleInputChange('bodyCorp', val)}
                         isOverridden={!!overrides.bodyCorp}
                         onReset={() => handleResetOverride('bodyCorp')}
-                        max={data.price}
+                        max={Math.round(data.price * 0.1)}
                     />
 
                     <ExpenseSliderRow 
@@ -1190,7 +1190,7 @@ const App = () => {
                         infoText="Fixed annual estimate (~$840). Inflates annually."
                         value={data.waterRates}
                         onChange={(val) => handleInputChange('waterRates', val)}
-                        max={100000}
+                        max={10000}
                     />
 
                     <ExpenseSliderRow 
@@ -1198,7 +1198,7 @@ const App = () => {
                         infoText="Annual allowance for repairs. Inflates annually."
                         value={data.maintenance}
                         onChange={(val) => handleInputChange('maintenance', val)}
-                        max={data.price}
+                        max={Math.round(data.price * 0.1)}
                     />
                     
                     <div className="mt-4">
