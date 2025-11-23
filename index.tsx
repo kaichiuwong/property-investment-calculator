@@ -11,7 +11,6 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
   ResponsiveContainer,
-  AreaChart,
   Area,
   ReferenceLine,
   ComposedChart
