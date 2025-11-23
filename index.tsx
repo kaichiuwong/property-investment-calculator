@@ -720,7 +720,7 @@ const App = () => {
       setTimeout(() => {
           window.print();
           setIsPrinting(false);
-      }, 200);
+      }, 500);
   };
 
   // Close suggestions on click outside
@@ -959,6 +959,7 @@ const App = () => {
 
   const renderCashFlowChart = () => (
       <ComposedChart 
+        key={isPrinting ? 'print-cf' : 'screen-cf'}
         data={projections}
         margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
       >
@@ -1003,6 +1004,7 @@ const App = () => {
 
   const renderWealthChart = () => (
       <ComposedChart 
+        key={isPrinting ? 'print-wealth' : 'screen-wealth'}
         data={projections}
         margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
       >
@@ -1637,8 +1639,11 @@ const App = () => {
               </div>
 
               {/* Cash Flow Chart Container */}
-              <div className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} w-full mb-8 break-inside-avoid print:mb-8 print:break-inside-avoid page-break-inside-avoid`}>
-                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2 print:page-break-after-avoid">
+              <div 
+                className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} w-full mb-8 print:mb-12`}
+                style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
+              >
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
                     <TrendingUp className="w-5 h-5 text-blue-500" />
                     Cash Flow Projection
                 </h3>
@@ -1650,8 +1655,11 @@ const App = () => {
               </div>
 
               {/* Wealth Chart Container */}
-              <div className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} w-full mb-8 break-inside-avoid print:mb-8 print:break-inside-avoid page-break-inside-avoid`}>
-                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2 print:page-break-after-avoid">
+              <div 
+                className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} w-full mb-8 print:mb-12`}
+                style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
+              >
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
                     <Building2 className="w-5 h-5 text-blue-500" />
                     Wealth Projection
                 </h3>
@@ -1688,7 +1696,7 @@ const App = () => {
         </div>
         
         {/* Footer with Disclaimer & Copyright */}
-        <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800 print:mt-6 print:border-t print:border-gray-300">
+        <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800 print:mt-8 print:border-t print:border-gray-300 print:break-inside-avoid">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400 print:text-gray-600">
                  <div className="max-w-4xl text-center md:text-left">
                     <p>
