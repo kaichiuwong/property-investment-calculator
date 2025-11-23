@@ -144,32 +144,6 @@ const ESTIMATED_GROWTH_RATE: Record<PropertyType, number> = {
   'Old Home': 6.00
 };
 
-// Default state constant for initialization and reset
-const DEFAULT_STATE: CalculatorState = {
-  propertyType: 'House',
-  state: 'VIC',
-  postcode: '3121',
-  price: 850000,
-  interestRate: 6.10,
-  loanTerm: 30,
-  lvr: 80,
-  suburb: 'Richmond',
-  weeklyRent: 650,
-  capitalGrowth: 6.0,
-  inflationRate: 2.8, // Expenses inflation
-  rentalGrowthRate: 5.5, // Rental growth (defaulted to ~5.5% based on recent ABS capital city data)
-  
-  // Default Expenses (will be recalculated on mount/change due to useEffects unless overridden)
-  landValue: 0,
-  councilRates: 0,
-  insurance: 0,
-  bodyCorp: 0,
-  propertyManagerRate: 10,
-  waterRates: 840, // 210 * 4
-  landTax: 0,
-  maintenance: 1000
-};
-
 // --- Helper Functions ---
 
 const estimateStampDuty = (price: number, state: AustralianState): number => {
@@ -193,6 +167,41 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
   }
   
   return 0;
+};
+
+// Helper to generate fresh default state with correct calculations
+const getInitialState = (): CalculatorState => {
+    const price = 850000;
+    const propertyType: PropertyType = 'House';
+    const state: AustralianState = 'VIC';
+    
+    const landValRatio = ESTIMATED_LAND_VALUE_RATIO[propertyType];
+    const landValue = Math.round(price * landValRatio);
+    
+    return {
+        propertyType,
+        state,
+        postcode: '3121',
+        price,
+        interestRate: 6.10,
+        loanTerm: 30,
+        lvr: 80,
+        suburb: 'Richmond',
+        weeklyRent: 650,
+        capitalGrowth: 6.0,
+        inflationRate: 2.8,
+        rentalGrowthRate: 5.5,
+        
+        // Pre-calculate default expenses so resetting works correctly even if effects don't trigger
+        landValue,
+        councilRates: Math.round(price * 0.0042),
+        insurance: Math.round(price * 0.003),
+        bodyCorp: 0,
+        propertyManagerRate: 10,
+        waterRates: 840,
+        landTax: Math.round(calculateLandTax(landValue, state)),
+        maintenance: 1000
+    };
 };
 
 // --- Components ---
@@ -219,13 +228,15 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
   // Sync internal state with external prop when not focused (or on mount)
   useEffect(() => {
     if (!isFocused) {
-       setInputValue(value ? Number(value).toLocaleString() : "");
+       // Fix: Check strictly for undefined/null so 0 is rendered as "0"
+       setInputValue((value !== undefined && value !== null) ? Number(value).toLocaleString() : "");
     }
   }, [value, isFocused]);
 
   const handleFocus = () => {
     setIsFocused(true);
-    setInputValue(value ? value.toString() : "");
+    // Fix: Check strictly for undefined/null so 0 is rendered in input when focused
+    setInputValue((value !== undefined && value !== null) ? value.toString() : "");
   };
 
   const handleBlur = () => {
@@ -331,7 +342,7 @@ const App = () => {
   }, [darkMode]);
 
   // Initial State
-  const [data, setData] = useState<CalculatorState>(DEFAULT_STATE);
+  const [data, setData] = useState<CalculatorState>(getInitialState);
 
   // Track manual overrides for calculated fields
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
@@ -426,17 +437,16 @@ const App = () => {
   };
 
   const handleFullReset = () => {
-    if (confirm("Are you sure you want to reset all fields to default?")) {
-        setData(DEFAULT_STATE);
-        setOverrides({});
-        setAiAnalysis(null);
-        setViewYear(0);
-        // Clear suggestions state
-        setSuburbSuggestions([]);
-        setPostcodeSuggestions([]);
-        setShowSuburbSuggestions(false);
-        setShowPostcodeSuggestions(false);
-    }
+      // Reset to fresh state (with re-calculated defaults) immediately
+      setData(getInitialState());
+      setOverrides({});
+      setAiAnalysis(null);
+      setViewYear(0);
+      // Clear suggestions state
+      setSuburbSuggestions([]);
+      setPostcodeSuggestions([]);
+      setShowSuburbSuggestions(false);
+      setShowPostcodeSuggestions(false);
   };
 
   const handleSuburbChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1304,7 +1314,7 @@ const App = () => {
                     <div className="h-px bg-gray-200 dark:bg-gray-700 my-2"></div>
                      <div className="flex justify-between text-base font-semibold">
                         <span className="text-gray-900 dark:text-white">Net Annual Cash Flow</span>
-                        <span className={currentStats.netCashFlow >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                        <span className="text-green-600 dark:text-green-400">
                             {currentStats.netCashFlow >= 0 ? '+' : '-'}${Math.abs(Math.round(currentStats.netCashFlow)).toLocaleString()}
                         </span>
                     </div>
