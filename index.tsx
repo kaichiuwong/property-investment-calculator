@@ -13,7 +13,8 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  ReferenceLine
+  ReferenceLine,
+  ComposedChart
 } from 'recharts';
 import {
   Calculator,
@@ -384,7 +385,12 @@ const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYe
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center justify-between gap-6">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                {/* Handle line vs area legend icon */}
+                {entry.type === undefined ? (
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                ) : (
+                    <div className="w-3 h-0.5" style={{ backgroundColor: entry.color }} />
+                )}
                 <span className="text-gray-600 dark:text-gray-300 font-medium">{entry.name}</span>
               </div>
               <span className={`font-mono font-semibold ${entry.name === 'Net Cash Flow' ? (entry.value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400') : 'text-gray-900 dark:text-white'}`}>
@@ -1460,7 +1466,7 @@ const App = () => {
               <div className="h-[350px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   {chartMode === 'wealth' ? (
-                      <AreaChart 
+                      <ComposedChart 
                         data={projections}
                         margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                       >
@@ -1494,7 +1500,8 @@ const App = () => {
                         <ReferenceLine y={data.price} stroke="#9ca3af" strokeDasharray="3 3" label={{ value: "Purchase Price", position: 'insideTopLeft', fill: darkMode ? "#9ca3af" : "#6b7280", fontSize: 10 }} />
                         <Area type="monotone" dataKey="value" name="Property Value" stroke="#3b82f6" fillOpacity={1} fill="url(#colorValue)" strokeWidth={2} />
                         <Area type="monotone" dataKey="loan" name="Loan Balance" stroke="#ef4444" fillOpacity={1} fill="url(#colorLoan)" strokeWidth={2} />
-                      </AreaChart>
+                        <Line type="monotone" dataKey="equity" name="Equity" stroke="#10b981" strokeWidth={3} dot={false} />
+                      </ComposedChart>
                   ) : (
                       <LineChart 
                         data={projections}
