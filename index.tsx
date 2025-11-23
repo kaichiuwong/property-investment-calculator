@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import {
-  LineChart,
   Line,
   XAxis,
   YAxis,
