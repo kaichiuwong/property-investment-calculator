@@ -735,6 +735,9 @@ const App = () => {
   const weeklyCashFlow = currentStats.netCashFlow / 52;
   const currentGrossYield = currentStats.value > 0 ? (currentStats.rentalIncome / currentStats.value) * 100 : 0;
 
+  // Calculate Building Value for max limits
+  const buildingValue = Math.max(0, data.price - data.landValue);
+
   const fetchAiAnalysis = async () => {
     if (!process.env.API_KEY) return alert("API Key missing.");
     setAiLoading(true);
@@ -1017,7 +1020,7 @@ const App = () => {
 
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
                   <div className="flex justify-between items-center mb-1">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Weekly Rent (Current)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Weekly Rent (per week)</label>
                     <button 
                       onClick={() => fetchRentEstimate()}
                       disabled={!data.suburb || rentEstimateLoading}
@@ -1027,15 +1030,25 @@ const App = () => {
                       Estimate
                     </button>
                   </div>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-                    <input 
-                      type="number"
-                      step={10}
-                      className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                      value={data.weeklyRent}
-                      onChange={(e) => handleInputChange('weeklyRent', Number(e.target.value))}
-                    />
+                  <div className="flex items-center gap-3">
+                        <input 
+                        type="range" 
+                        min="0" 
+                        max="10000" 
+                        step="10"
+                        className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                        value={data.weeklyRent || 0}
+                        onChange={(e) => handleInputChange('weeklyRent', Number(e.target.value))}
+                        />
+                        <div className="w-28 relative">
+                           <FormattedNumberInput
+                                icon={DollarSign}
+                                className="w-full pl-8 pr-2 py-1.5 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                value={data.weeklyRent}
+                                onChange={(val: number) => handleInputChange('weeklyRent', val)}
+                                step={10}
+                            />
+                        </div>
                   </div>
                 </div>
               </div>
@@ -1080,7 +1093,7 @@ const App = () => {
                         onChange={(val) => handleInputChange('insurance', val)}
                         isOverridden={!!overrides.insurance}
                         onReset={() => handleResetOverride('insurance')}
-                        max={10000}
+                        max={buildingValue}
                     />
 
                     <ExpenseSliderRow 
@@ -1090,7 +1103,7 @@ const App = () => {
                         onChange={(val) => handleInputChange('bodyCorp', val)}
                         isOverridden={!!overrides.bodyCorp}
                         onReset={() => handleResetOverride('bodyCorp')}
-                        max={20000}
+                        max={buildingValue}
                     />
 
                     <ExpenseSliderRow 
@@ -1098,7 +1111,7 @@ const App = () => {
                         infoText="Fixed annual estimate (~$840). Inflates annually."
                         value={data.waterRates}
                         onChange={(val) => handleInputChange('waterRates', val)}
-                        max={3000}
+                        max={100000}
                     />
 
                     <ExpenseSliderRow 
@@ -1106,7 +1119,7 @@ const App = () => {
                         infoText="Annual allowance for repairs. Inflates annually."
                         value={data.maintenance}
                         onChange={(val) => handleInputChange('maintenance', val)}
-                        max={10000}
+                        max={buildingValue}
                     />
                     
                     <div className="mt-4">
