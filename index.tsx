@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
 import {
@@ -12,8 +12,6 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   ReferenceLine
 } from 'recharts';
 import {
@@ -30,15 +28,10 @@ import {
   Sun,
   Moon,
   LandPlot,
-  Droplets,
-  ShieldCheck,
-  Briefcase,
   Undo2,
   HelpCircle,
   Clock,
-  ArrowRight,
   Hash,
-  Table,
   RotateCcw
 } from 'lucide-react';
 import './index.css';
@@ -147,7 +140,7 @@ const ESTIMATED_GROWTH_RATE: Record<PropertyType, number> = {
 
 // --- Helper Functions ---
 
-const estimateStampDuty = (price: number, state: AustralianState): number => {
+const estimateStampDuty = (price: number, _state: AustralianState): number => {
   // Simplified approximation for demo
   const rate = 0.055; 
   return price * rate;
@@ -728,7 +721,7 @@ const App = () => {
         contents: prompt,
       });
 
-      setAiAnalysis(response.text);
+      setAiAnalysis(response.text ?? null);
     } catch (e) {
       console.error("Analysis failed", e);
       setAiAnalysis("Unable to generate analysis.");
