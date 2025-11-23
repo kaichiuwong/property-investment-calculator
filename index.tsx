@@ -447,7 +447,7 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
     return (
         <div className="mb-4 last:mb-0 print:mb-2 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
             <div className="flex justify-between items-center mb-1 print:mb-0">
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center print:text-sm print:text-gray-600">
                     {label} <InfoTooltip text={infoText} />
                 </label>
                 {isOverridden && onReset && (
@@ -472,7 +472,7 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
                 />
                 <div className="w-32 print:w-auto">
                      <FormattedNumberInput
-                        className={`w-full pl-9 pr-3 py-2 text-right text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono`}
+                        className={`w-full pl-9 pr-3 py-2 text-right text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:text-sm`}
                         value={value}
                         onChange={onChange}
                         max={max}
@@ -679,7 +679,7 @@ const App = () => {
       setTimeout(() => {
           window.print();
           setIsPrinting(false);
-      }, 1000);
+      }, 1500);
   };
 
   useEffect(() => {
@@ -1073,7 +1073,7 @@ const App = () => {
 
                 <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Purchase Price</label>
-                  <FormattedNumberInput step={1000} className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:p-0 print:text-right print:font-mono" value={data.price} onChange={(val: number) => handleInputChange('price', val)} icon={DollarSign} min={0} />
+                  <FormattedNumberInput step={1000} className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:p-0 print:text-right print:font-mono print:text-sm" value={data.price} onChange={(val: number) => handleInputChange('price', val)} icon={DollarSign} min={0} />
                 </div>
 
                 <div className="pt-2 print:pt-0 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
@@ -1087,7 +1087,7 @@ const App = () => {
                         </div>
                         {overrides.landValue && <ResetButton field="landValue" />}
                     </label>
-                    <FormattedNumberInput className={`w-full pl-10 pr-3 py-2 text-base md:text-sm bg-gray-50 dark:bg-gray-800/50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors ${overrides.landValue ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:bg-transparent print:text-right print:font-mono`} value={data.landValue} onChange={(val: number) => handleInputChange('landValue', val)} icon={LandPlot} min={0} max={data.price} />
+                    <FormattedNumberInput className={`w-full pl-10 pr-3 py-2 text-base md:text-sm bg-gray-50 dark:bg-gray-800/50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors ${overrides.landValue ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:bg-transparent print:text-right print:font-mono print-no-bg print:text-sm`} value={data.landValue} onChange={(val: number) => handleInputChange('landValue', val)} icon={LandPlot} min={0} max={data.price} />
                 </div>
               </div>
             </div>
@@ -1103,32 +1103,32 @@ const App = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">LVR (%)</label>
-                    <FormattedNumberInput className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto" value={data.lvr} onChange={(val: number) => handleInputChange('lvr', val)} min={0} max={100} />
+                    <FormattedNumberInput className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto print:text-sm" value={data.lvr} onChange={(val: number) => handleInputChange('lvr', val)} min={0} max={100} />
                   </div>
                   <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Rate (%)</label>
-                    <FormattedNumberInput step={0.01} className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto" value={data.interestRate} onChange={(val: number) => handleInputChange('interestRate', val)} min={0} max={200} />
+                    <FormattedNumberInput step={0.01} className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto print:text-sm" value={data.interestRate} onChange={(val: number) => handleInputChange('interestRate', val)} min={0} max={200} />
                   </div>
                 </div>
 
                 <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Loan Term (Years)</label>
                     <input type="range" min="5" max="30" className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden" value={data.loanTerm} onChange={(e) => handleInputChange('loanTerm', Number(e.target.value))} />
-                    <div className="text-right text-sm text-gray-500 dark:text-gray-400 mt-1 print:text-left print:font-mono print:text-gray-900 print:mt-0">{data.loanTerm} years</div>
+                    <div className="text-right text-sm text-gray-500 dark:text-gray-400 mt-1 print:text-left print:font-mono print:text-gray-900 print:mt-0 print:text-sm">{data.loanTerm} years</div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 print:border-none print:pt-2">
-                  <div className="flex justify-between items-center mb-1 print:border-b print:border-gray-100 print:pb-1">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 print:text-gray-600">Weekly Rent (per week)</label>
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 print:border-none print:pt-2 print:flex print:justify-between print:items-center print:border-b print:border-gray-100 print:pb-1">
+                  <div className="flex justify-between items-center mb-1 print:mb-0 print:w-auto">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 print:text-sm print:text-gray-600">Weekly Rent (per week)</label>
                     <button onClick={() => fetchRentEstimate()} disabled={!data.suburb || rentEstimateLoading} className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50 print:hidden">
                       {rentEstimateLoading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                       Estimate
                     </button>
                   </div>
-                  <div className="flex items-center gap-3 print:block">
+                  <div className="flex items-center gap-3 print:block print:w-auto">
                         <input type="range" min="0" max="10000" step="10" className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden" value={data.weeklyRent || 0} onChange={(e) => handleInputChange('weeklyRent', Number(e.target.value))} />
-                        <div className="w-32 relative print:w-full">
-                           <FormattedNumberInput icon={DollarSign} className="w-full pl-10 pr-2 py-2 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all print:border-none print:p-0 print:font-mono" value={data.weeklyRent} onChange={(val: number) => handleInputChange('weeklyRent', val)} step={10} min={0} max={10000} />
+                        <div className="w-32 relative print:w-auto">
+                           <FormattedNumberInput icon={DollarSign} className="w-full pl-10 pr-2 py-2 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all print:border-none print:p-0 print:font-mono print:text-sm" value={data.weeklyRent} onChange={(val: number) => handleInputChange('weeklyRent', val)} step={10} min={0} max={10000} />
                         </div>
                   </div>
                 </div>
@@ -1148,14 +1148,14 @@ const App = () => {
                                 <span className="flex items-center">Council <InfoTooltip text="Estimated based on property value (~$900 + 0.1%). Inflates annually." /></span>
                                 {overrides.councilRates && <ResetButton field="councilRates" />}
                             </label>
-                            <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`} value={data.councilRates} onChange={(val: number) => handleInputChange('councilRates', val)} min={0} icon={DollarSign} />
+                            <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto print:text-sm`} value={data.councilRates} onChange={(val: number) => handleInputChange('councilRates', val)} min={0} icon={DollarSign} />
                         </div>
                         <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
                             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between print:text-sm print:text-gray-600 print:mb-0">
                                 <span className="flex items-center">Land Tax <InfoTooltip text="Based on state-specific progressive tax scales for land value. Inflates annually." /></span>
                                 {overrides.landTax && <ResetButton field="landTax" />}
                             </label>
-                            <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`} value={data.landTax} onChange={(val: number) => handleInputChange('landTax', val)} min={0} icon={DollarSign} />
+                            <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto print:text-sm`} value={data.landTax} onChange={(val: number) => handleInputChange('landTax', val)} min={0} icon={DollarSign} />
                         </div>
                     </div>
                     
@@ -1172,7 +1172,7 @@ const App = () => {
                              <input type="range" min="0" max="20" className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden" value={data.propertyManagerRate} onChange={(e) => handleInputChange('propertyManagerRate', Number(e.target.value))} />
                             <div className="w-32 print:w-auto">
                                 <FormattedNumberInput
-                                    className="w-full px-3 py-2 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all print:border-none print:p-0 print:font-mono"
+                                    className="w-full px-3 py-2 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all print:border-none print:p-0 print:font-mono print:text-sm"
                                     value={data.propertyManagerRate}
                                     onChange={(val: number) => handleInputChange('propertyManagerRate', val)}
                                     min={0}
@@ -1213,7 +1213,7 @@ const App = () => {
             
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:grid-cols-3 print:gap-4 print:mb-6">
-              <div className={`rounded-xl p-5 shadow-sm border relative overflow-hidden transition-colors ${weeklyCashFlow >= 0 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'} print:shadow-none print:border print:border-gray-300 print:bg-white`}>
+              <div className={`rounded-xl p-5 shadow-sm border relative overflow-hidden transition-colors ${weeklyCashFlow >= 0 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'} print:shadow-none print:border print:border-gray-300 print-color-exact`}>
                  <div className="flex justify-between items-start mb-2">
                     <span className={`text-sm font-medium ${weeklyCashFlow >= 0 ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'} print:text-black`}>Weekly Net Cash Flow</span>
                  </div>
@@ -1336,7 +1336,6 @@ const App = () => {
 
               <div className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                 <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
-                    <TrendingUp className="w-5 h-5 text-blue-500" />
                     Cash Flow Projection
                 </h3>
                 <div className="h-[350px] print:h-[300px] w-full">
@@ -1348,7 +1347,6 @@ const App = () => {
 
               <div className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                 <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
-                    <Building2 className="w-5 h-5 text-blue-500" />
                     Wealth Projection
                 </h3>
                 <div className="h-[350px] print:h-[300px] w-full">

@@ -22,6 +22,17 @@ body {
     font-size: 12px;
   }
 
+  /* Utility for exact color printing */
+  .print-color-exact {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Utility to force transparent background in print */
+  .print-no-bg {
+    background-color: transparent !important;
+  }
+
   /* Force Light Mode overrides */
   .dark {
     color-scheme: light;
