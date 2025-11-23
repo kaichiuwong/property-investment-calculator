@@ -31,8 +31,7 @@ import {
   Clock,
   Hash,
   RotateCcw,
-  Printer,
-  Percent
+  Printer
 } from 'lucide-react';
 import './index.css';
 import { SUBURB_DB_RAW } from './suburbs';
@@ -339,6 +338,10 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
     if (newVal !== val) {
         onChange(newVal);
         setInputValue(newVal.toString()); // Update visual immediately
+    } else if (inputValue === "") {
+        // If empty on blur, revert to 0 if min allows, or existing value logic
+        setInputValue("0");
+        onChange(0);
     }
   };
 
@@ -419,8 +422,29 @@ const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYe
 
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    
+    if (isMobile) {
+        // Compact Mobile Tooltip
+        return (
+            <div className="bg-white/95 dark:bg-gray-800/95 border border-gray-100 dark:border-gray-700 rounded-md shadow-lg p-2 text-[10px] leading-tight backdrop-blur-sm">
+                <p className="font-bold text-gray-900 dark:text-white mb-1 border-b border-gray-100 dark:border-gray-700 pb-1">Year {label}</p>
+                <div className="grid grid-cols-1 gap-y-0.5">
+                    {payload.map((entry: any, index: number) => (
+                        <div key={index} className="flex justify-between gap-3">
+                            <span className="text-gray-500 dark:text-gray-400 truncate">{entry.name}</span>
+                            <span className={`font-mono font-medium text-right ${entry.name === 'Net Cash Flow' ? (entry.value >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-900 dark:text-white'}`}>
+                                {entry.name === 'Net Cash Flow' && entry.value > 0 ? '+' : ''}${Number(entry.value).toLocaleString()}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    // Desktop Tooltip
     return (
-      <div className={`bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg shadow-xl z-50 ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'}`}>
+      <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg shadow-xl p-3 text-sm z-50">
         <p className="font-bold text-gray-900 dark:text-white mb-1 pb-1 border-b border-gray-100 dark:border-gray-700">
           Year {label}
         </p>
@@ -444,8 +468,8 @@ const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYe
           ))}
         </div>
         
-        {/* Extra Context for Cash Flow Chart - Hide on Mobile to reduce overlap */}
-        {!isMobile && data.breakdown && payload.some((p: any) => p.dataKey === 'netCashFlow') && (
+        {/* Extra Context for Cash Flow Chart */}
+        {data.breakdown && payload.some((p: any) => p.dataKey === 'netCashFlow') && (
            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
               <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
                   <span>Mortgage</span>
@@ -501,9 +525,9 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
                     value={Math.min(value, max) || 0}
                     onChange={(e) => onChange(Number(e.target.value))}
                 />
-                <div className="w-32 print:w-auto">
+                <div className="w-40 print:w-auto">
                      <FormattedNumberInput
-                        className={`w-full pl-10 pr-3 py-2 text-right text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono`}
+                        className={`w-full pl-9 pr-3 py-2 text-right text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono`}
                         value={value}
                         onChange={onChange}
                         max={max}
@@ -1476,7 +1500,7 @@ const App = () => {
           <div className="lg:col-span-8 space-y-6">
 
              {/* Time Travel Slider - Floating Card UI */}
-             <div className="sticky top-4 z-40 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-4 mb-6 print:hidden">
+             <div className="sticky top-4 z-40 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm rounded-xl p-5 mb-6 print:hidden">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-600" />
