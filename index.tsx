@@ -319,8 +319,12 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
 
   const handleFocus = () => {
     setIsFocused(true);
-    // Fix: Check strictly for undefined/null so 0 is rendered in input when focused
-    setInputValue((value !== undefined && value !== null) ? value.toString() : "");
+    // Change: If value is 0, set input to empty string for easier typing
+    if (value === 0) {
+        setInputValue("");
+    } else {
+        setInputValue((value !== undefined && value !== null) ? value.toString() : "");
+    }
   };
 
   const handleBlur = () => {
@@ -398,9 +402,10 @@ interface CustomGraphTooltipProps {
     label?: string | number;
     setViewYear?: (year: number) => void;
     currentViewYear?: number;
+    isMobile?: boolean;
 }
 
-const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYear }: CustomGraphTooltipProps) => {
+const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYear, isMobile }: CustomGraphTooltipProps) => {
   // Sync slider with chart hover
   useEffect(() => {
     if (active && label !== undefined && setViewYear) {
@@ -415,19 +420,19 @@ const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYe
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-3 rounded-lg shadow-xl text-sm z-50">
-        <p className="font-bold text-gray-900 dark:text-white mb-2 pb-1 border-b border-gray-100 dark:border-gray-700">
+      <div className={`bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg shadow-xl z-50 ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'}`}>
+        <p className="font-bold text-gray-900 dark:text-white mb-1 pb-1 border-b border-gray-100 dark:border-gray-700">
           Year {label}
         </p>
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center justify-between gap-6">
+            <div key={index} className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 {/* Handle line vs area legend icon */}
                 {entry.type === undefined ? (
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
                 ) : (
-                    <div className="w-3 h-0.5" style={{ backgroundColor: entry.color }} />
+                    <div className="w-2.5 h-0.5" style={{ backgroundColor: entry.color }} />
                 )}
                 <span className="text-gray-600 dark:text-gray-300 font-medium">{entry.name}</span>
               </div>
@@ -439,15 +444,15 @@ const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYe
           ))}
         </div>
         
-        {/* Extra Context for Cash Flow Chart */}
-        {data.breakdown && payload.some((p: any) => p.dataKey === 'netCashFlow') && (
-           <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+        {/* Extra Context for Cash Flow Chart - Hide on Mobile to reduce overlap */}
+        {!isMobile && data.breakdown && payload.some((p: any) => p.dataKey === 'netCashFlow') && (
+           <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
               <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  <span>Mortgage Repayments</span>
+                  <span>Mortgage</span>
                   <span>${data.breakdown.repayment.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                  <span>Operating Expenses</span>
+                  <span>Expenses</span>
                   <span>${(data.expenses).toLocaleString()}</span>
               </div>
            </div>
@@ -496,9 +501,9 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
                     value={Math.min(value, max) || 0}
                     onChange={(e) => onChange(Number(e.target.value))}
                 />
-                <div className="w-24 print:w-auto">
+                <div className="w-32 print:w-auto">
                      <FormattedNumberInput
-                        className={`w-full pl-8 pr-2 py-1 text-right text-sm border rounded-md bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono`}
+                        className={`w-full pl-10 pr-3 py-2 text-right text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono`}
                         value={value}
                         onChange={onChange}
                         max={max}
@@ -1007,7 +1012,7 @@ const App = () => {
             tick={{fontSize: 12}}
         />
         <RechartsTooltip 
-            content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} />} 
+            content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} isMobile={isMobile} />} 
             cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
             position={isMobile ? { x: 0, y: 0 } : undefined}
         />
@@ -1049,7 +1054,7 @@ const App = () => {
             tick={{fontSize: 12}}
         />
         <RechartsTooltip 
-            content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} />} 
+            content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} isMobile={isMobile} />} 
             cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
             position={isMobile ? { x: 0, y: 0 } : undefined}
         />
@@ -1348,10 +1353,10 @@ const App = () => {
                         value={data.weeklyRent || 0}
                         onChange={(e) => handleInputChange('weeklyRent', Number(e.target.value))}
                         />
-                        <div className="w-28 relative print:w-full">
+                        <div className="w-32 relative print:w-full">
                            <FormattedNumberInput
                                 icon={DollarSign}
-                                className="w-full pl-8 pr-2 py-1.5 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all print:border-none print:p-0 print:font-mono"
+                                className="w-full pl-10 pr-2 py-2 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all print:border-none print:p-0 print:font-mono"
                                 value={data.weeklyRent}
                                 onChange={(val: number) => handleInputChange('weeklyRent', val)}
                                 step={10}
@@ -1378,7 +1383,7 @@ const App = () => {
                                 {overrides.councilRates && <ResetButton field="councilRates" />}
                             </label>
                             <FormattedNumberInput
-                                className={`w-full pl-8 px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`}
+                                className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`}
                                 value={data.councilRates}
                                 onChange={(val: number) => handleInputChange('councilRates', val)}
                                 min={0}
@@ -1391,7 +1396,7 @@ const App = () => {
                                 {overrides.landTax && <ResetButton field="landTax" />}
                             </label>
                             <FormattedNumberInput
-                                className={`w-full pl-8 px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`}
+                                className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`}
                                 value={data.landTax}
                                 onChange={(val: number) => handleInputChange('landTax', val)}
                                 min={0}
@@ -1449,7 +1454,7 @@ const App = () => {
                             />
                             <span className="text-xs font-mono w-16 text-right text-gray-900 dark:text-white print:text-sm">
                                 <FormattedNumberInput
-                                    className="w-full py-1 text-right bg-transparent outline-none"
+                                    className="w-full py-2 text-right bg-transparent outline-none border-b border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
                                     value={data.propertyManagerRate}
                                     onChange={(val: number) => handleInputChange('propertyManagerRate', val)}
                                     min={0}
@@ -1471,7 +1476,7 @@ const App = () => {
           <div className="lg:col-span-8 space-y-6">
 
              {/* Time Travel Slider - Floating Card UI */}
-             <div className="sticky top-4 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-4 mb-6 print:hidden">
+             <div className="sticky top-4 z-40 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-4 mb-6 print:hidden">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-600" />
