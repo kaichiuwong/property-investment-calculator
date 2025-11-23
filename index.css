@@ -94,4 +94,43 @@ body {
     height: 300px !important;
     width: 100% !important;
   }
+
+  /* Custom Print Styles requested by user */
+  .print-gradient-green {
+    background: linear-gradient(to right, #dcfce7, #ffffff) !important;
+    border: 1px solid #bbf7d0 !important;
+  }
+  
+  .print-gradient-red {
+    background: linear-gradient(to right, #fee2e2, #ffffff) !important;
+    border: 1px solid #fecaca !important;
+  }
+
+  .print-highlight-yellow {
+    background-color: #ccff00 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    padding: 0 4px !important;
+    border-radius: 2px !important;
+    width: auto !important;
+    min-width: 60px;
+    text-align: right !important;
+    display: inline-block !important;
+    color: black !important;
+  }
+
+  .print-card-title {
+      background-color: #f3f4f6 !important; /* gray-100 */
+      padding: 4px 8px !important;
+      border-radius: 4px !important;
+      margin-bottom: 8px !important;
+      border-bottom: none !important;
+      color: black !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+  }
+  
+  .print-nowrap {
+      white-space: nowrap !important;
+  }
 }

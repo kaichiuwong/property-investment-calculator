@@ -131,7 +131,7 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
 
   if (state === 'TAS') {
     if (landValue < 50000) return 0;
-    if (landValue < 100000) return (landValue - 50000) * 0.0055;
+    if (landValue < 1000000) return (landValue - 50000) * 0.0055;
     if (landValue < 250000) return 275 + (landValue - 100000) * 0.0055;
     if (landValue < 500000) return 1100 + (landValue - 250000) * 0.0125;
     return 4225 + (landValue - 500000) * 0.015;
@@ -447,7 +447,7 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
     return (
         <div className="mb-4 last:mb-0 print:mb-2 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
             <div className="flex justify-between items-center mb-1 print:mb-0">
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center print:text-sm print:text-gray-600">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center print:text-sm print:text-gray-600 print:whitespace-nowrap">
                     {label} <InfoTooltip text={infoText} />
                 </label>
                 {isOverridden && onReset && (
@@ -993,7 +993,7 @@ const App = () => {
             
             {/* Property Details Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-none print:p-0">
-              <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-blue-800 print:border-b print:border-gray-200 print:pb-2">
+              <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print-card-title">
                 <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400 print:hidden" />
                 Property Details
               </h2>
@@ -1061,7 +1061,7 @@ const App = () => {
                 </div>
 
                 <div className="relative z-10 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Type</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">Type</label>
                     <div className="relative print:hidden">
                         <select className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors" value={data.propertyType} onChange={(e) => { const newType = e.target.value as PropertyType; handleInputChange('propertyType', newType); fetchRentEstimate(undefined, undefined, newType); }}>
                         {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1072,12 +1072,12 @@ const App = () => {
                 </div>
 
                 <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Purchase Price</label>
-                  <FormattedNumberInput step={1000} className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:p-0 print:text-right print:font-mono print:text-sm" value={data.price} onChange={(val: number) => handleInputChange('price', val)} icon={DollarSign} min={0} />
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">Purchase Price</label>
+                  <FormattedNumberInput step={1000} className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:p-0 print:text-right print:font-mono print:text-sm print-highlight-yellow" value={data.price} onChange={(val: number) => handleInputChange('price', val)} icon={DollarSign} min={0} />
                 </div>
 
                 <div className="pt-2 print:pt-0 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between print:text-sm print:text-gray-600 print:mb-0">
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">
                         <div className="flex flex-col print:flex-row print:gap-1">
                            <div className="flex items-center">
                               <span>Est. Land Value</span>
@@ -1094,7 +1094,7 @@ const App = () => {
 
             {/* Loan Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-none print:p-0">
-              <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-blue-800 print:border-b print:border-gray-200 print:pb-2">
+              <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print-card-title">
                 <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400 print:hidden" />
                 Loan & Finance
               </h2>
@@ -1102,17 +1102,17 @@ const App = () => {
               <div className="space-y-4 print:space-y-2">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">LVR (%)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">LVR (%)</label>
                     <FormattedNumberInput className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto print:text-sm" value={data.lvr} onChange={(val: number) => handleInputChange('lvr', val)} min={0} max={100} />
                   </div>
                   <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Rate (%)</label>
-                    <FormattedNumberInput step={0.01} className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto print:text-sm" value={data.interestRate} onChange={(val: number) => handleInputChange('interestRate', val)} min={0} max={200} />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">Rate (%)</label>
+                    <FormattedNumberInput step={0.01} className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto print:text-sm print-highlight-yellow" value={data.interestRate} onChange={(val: number) => handleInputChange('interestRate', val)} min={0} max={200} />
                   </div>
                 </div>
 
                 <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Loan Term (Years)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">Loan Term (Years)</label>
                     <input type="range" min="5" max="30" className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden" value={data.loanTerm} onChange={(e) => handleInputChange('loanTerm', Number(e.target.value))} />
                     <div className="text-right text-sm text-gray-500 dark:text-gray-400 mt-1 print:text-left print:font-mono print:text-gray-900 print:mt-0 print:text-sm">{data.loanTerm} years</div>
                 </div>
@@ -1136,8 +1136,8 @@ const App = () => {
 
                 {/* Print version of Weekly Rent */}
                 <div className="hidden print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
-                    <label className="block text-sm font-medium text-gray-600 print:mb-0">Weekly Rent</label>
-                    <FormattedNumberInput className="print:border-none print:p-0 print:text-right print:font-mono print:text-sm" value={data.weeklyRent} onChange={() => {}} step={10} min={0} />
+                    <label className="block text-sm font-medium text-gray-600 print:mb-0 print:whitespace-nowrap">Weekly Rent</label>
+                    <FormattedNumberInput className="print:border-none print:p-0 print:text-right print:font-mono print:text-sm print-highlight-yellow" value={data.weeklyRent} onChange={() => {}} step={10} min={0} />
                 </div>
 
               </div>
@@ -1145,21 +1145,21 @@ const App = () => {
 
             {/* Expenses Breakdown Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-none print:p-0 print:col-span-2">
-                 <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-blue-800 print:border-b print:border-gray-200 print:pb-2">
+                 <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print-card-title">
                     <TrendingUp className="w-5 h-5 text-red-600 dark:text-red-400 print:hidden" />
                     Annual Expenses
                 </h2>
                 <div className="space-y-3 print:space-y-2">
                     <div className="grid grid-cols-2 gap-3 mb-4 print:mb-2">
                          <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
-                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between print:text-sm print:text-gray-600 print:mb-0">
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">
                                 <span className="flex items-center">Council <InfoTooltip text="Estimated based on property value (~$900 + 0.1%). Inflates annually." /></span>
                                 {overrides.councilRates && <ResetButton field="councilRates" />}
                             </label>
                             <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto print:text-sm`} value={data.councilRates} onChange={(val: number) => handleInputChange('councilRates', val)} min={0} icon={DollarSign} />
                         </div>
                         <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
-                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between print:text-sm print:text-gray-600 print:mb-0">
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">
                                 <span className="flex items-center">Land Tax <InfoTooltip text="Based on state-specific progressive tax scales for land value. Inflates annually." /></span>
                                 {overrides.landTax && <ResetButton field="landTax" />}
                             </label>
@@ -1173,7 +1173,7 @@ const App = () => {
                     <ExpenseSliderRow label="Maintenance" infoText="Annual allowance for repairs. Inflates annually." value={data.maintenance} onChange={(val) => handleInputChange('maintenance', val)} max={Math.round(data.price * 0.1)} icon={DollarSign} />
                     
                     <div className="mt-4 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
-                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center print:text-sm print:text-gray-600 print:mb-0">
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">
                             Property Manager Fee ({data.propertyManagerRate}%) - ${Math.round(data.weeklyRent * 52 * (data.propertyManagerRate/100)).toLocaleString()}/yr <InfoTooltip text="Property Management fee calculated as a percentage of Rental Income." />
                         </label>
                         <div className="flex items-center gap-3 print:block">
@@ -1221,7 +1221,7 @@ const App = () => {
             
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:grid-cols-3 print:gap-4 print:mb-6">
-              <div className={`rounded-xl p-5 shadow-sm border relative overflow-hidden transition-colors ${weeklyCashFlow >= 0 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'} print:shadow-none print:border print:border-gray-300 print-color-exact`}>
+              <div className={`rounded-xl p-5 shadow-sm border relative overflow-hidden transition-colors ${weeklyCashFlow >= 0 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'} print:shadow-none ${weeklyCashFlow >= 0 ? 'print-gradient-green' : 'print-gradient-red'} print-color-exact`}>
                  <div className="flex justify-between items-start mb-2">
                     <span className={`text-sm font-medium ${weeklyCashFlow >= 0 ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'} print:text-black`}>Weekly Net Cash Flow</span>
                  </div>
@@ -1343,7 +1343,7 @@ const App = () => {
               </div>
 
               <div className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 print-card-title" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
                     Cash Flow Projection
                 </h3>
                 <div className="h-[350px] print:h-[300px] w-full">
@@ -1354,7 +1354,7 @@ const App = () => {
               </div>
 
               <div className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 print-card-title" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
                     Wealth Projection
                 </h3>
                 <div className="h-[350px] print:h-[300px] w-full">
@@ -1368,7 +1368,7 @@ const App = () => {
             {/* AI Analysis Section */}
             {aiAnalysis && (
               <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-slate-800 rounded-xl p-6 border border-purple-100 dark:border-gray-700 transition-colors print:shadow-none print:border-gray-200 print:bg-white print:break-inside-avoid print:p-0">
-                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-purple-900 dark:text-purple-300 print:text-blue-800 print:border-b print:border-gray-200 print:pb-2">
+                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-purple-900 dark:text-purple-300 print-card-title">
                     <Sparkles className="w-5 h-5 print:hidden" />
                     AI Investment Analysis
                 </h2>
