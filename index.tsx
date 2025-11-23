@@ -353,7 +353,26 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
   );
 };
 
-const CustomGraphTooltip = ({ active, payload, label }: any) => {
+interface CustomGraphTooltipProps {
+    active?: boolean;
+    payload?: any[];
+    label?: string | number;
+    setViewYear?: (year: number) => void;
+    currentViewYear?: number;
+}
+
+const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYear }: CustomGraphTooltipProps) => {
+  // Sync slider with chart hover
+  useEffect(() => {
+    if (active && label !== undefined && setViewYear) {
+        const year = Number(label);
+        // Only update if it's different to prevent potential cycles, though state update batching usually handles this
+        if (year !== currentViewYear) {
+            setViewYear(year);
+        }
+    }
+  }, [active, label, setViewYear, currentViewYear]);
+
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -1444,16 +1463,6 @@ const App = () => {
                       <AreaChart 
                         data={projections}
                         margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                        onMouseMove={(e: any) => {
-                            if (e.activeLabel !== undefined) {
-                                setViewYear(Number(e.activeLabel));
-                            }
-                        }}
-                        onTouchMove={(e: any) => {
-                             if (e.activeLabel !== undefined) {
-                                setViewYear(Number(e.activeLabel));
-                            }
-                        }}
                       >
                         <defs>
                           <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -1477,7 +1486,10 @@ const App = () => {
                             stroke={darkMode ? "#9ca3af" : "#6b7280"}
                             tick={{fontSize: 12}}
                         />
-                        <RechartsTooltip content={<CustomGraphTooltip />} cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                        <RechartsTooltip 
+                            content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} />} 
+                            cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
+                        />
                         <Legend />
                         <ReferenceLine y={data.price} stroke="#9ca3af" strokeDasharray="3 3" label={{ value: "Purchase Price", position: 'insideTopLeft', fill: darkMode ? "#9ca3af" : "#6b7280", fontSize: 10 }} />
                         <Area type="monotone" dataKey="value" name="Property Value" stroke="#3b82f6" fillOpacity={1} fill="url(#colorValue)" strokeWidth={2} />
@@ -1487,16 +1499,6 @@ const App = () => {
                       <LineChart 
                         data={projections}
                         margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                         onMouseMove={(e: any) => {
-                            if (e.activeLabel !== undefined) {
-                                setViewYear(Number(e.activeLabel));
-                            }
-                        }}
-                        onTouchMove={(e: any) => {
-                             if (e.activeLabel !== undefined) {
-                                setViewYear(Number(e.activeLabel));
-                            }
-                        }}
                       >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#374151" : "#e5e7eb"} />
                         <XAxis 
@@ -1510,7 +1512,10 @@ const App = () => {
                             stroke={darkMode ? "#9ca3af" : "#6b7280"}
                             tick={{fontSize: 12}}
                         />
-                        <RechartsTooltip content={<CustomGraphTooltip />} cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                        <RechartsTooltip 
+                            content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} />} 
+                            cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
+                        />
                         <Legend />
                         <ReferenceLine y={0} stroke={darkMode ? "#e5e7eb" : "#000"} strokeWidth={2} />
                         <Line type="monotone" dataKey="rentalIncome" name="Rental Income" stroke="#10b981" strokeWidth={2} dot={false} />
