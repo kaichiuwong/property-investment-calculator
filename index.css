@@ -80,7 +80,7 @@ body {
 
   /* Chart resizing for print */
   .recharts-responsive-container {
-    height: 400px !important;
+    height: 300px !important;
     width: 100% !important;
   }
 }

@@ -133,17 +133,33 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
   if (state === 'SA') {
     // SA 2024-2025 Land Tax Rates (General)
     // Source: https://www.revenuesa.sa.gov.au/landtax/rates-and-thresholds
-    // Up to $534,000: Nil
-    // $534,001 to $801,000: $0.50 for every $100 or part (0.5%)
-    // $801,001 to $1,133,000: $1,335 + $1.00 for every $100 or part (1.0%)
-    // $1,133,001 to $1,466,000: $4,655 + $2.00 for every $100 or part (2.0%)
-    // Over $1,466,000: $11,315 + $2.40 for every $100 or part (2.4%)
-
     if (landValue <= 534000) return 0;
     if (landValue <= 801000) return (landValue - 534000) * 0.005; 
     if (landValue <= 1133000) return 1335 + (landValue - 801000) * 0.01;
     if (landValue <= 1466000) return 4655 + (landValue - 1133000) * 0.02;
     return 11315 + (landValue - 1466000) * 0.024;
+  }
+
+  if (state === 'TAS') {
+    // TAS 2024-2025 General Land Tax Rates
+    // Source: https://www.sro.tas.gov.au/land-tax/rates-of-land-tax
+    if (landValue < 50000) return 0;
+    if (landValue < 100000) return (landValue - 50000) * 0.0055;
+    if (landValue < 250000) return 275 + (landValue - 100000) * 0.0055;
+    if (landValue < 500000) return 1100 + (landValue - 250000) * 0.0125;
+    return 4225 + (landValue - 500000) * 0.015;
+  }
+
+  if (state === 'WA') {
+    // WA 2024-2025 Land Tax Rates
+    // Source: https://www.wa.gov.au/organisation/department-of-treasury-and-finance/land-tax-assessment
+    if (landValue <= 300000) return 0;
+    if (landValue <= 420000) return 300;
+    if (landValue <= 1000000) return 300 + (landValue - 420000) * 0.0025;
+    if (landValue <= 1800000) return 1750 + (landValue - 1000000) * 0.0090;
+    if (landValue <= 5000000) return 8950 + (landValue - 1800000) * 0.0180;
+    if (landValue <= 11000000) return 66550 + (landValue - 5000000) * 0.0200;
+    return 186550 + (landValue - 11000000) * 0.0265;
   }
   
   return 0;
@@ -1596,25 +1612,29 @@ const App = () => {
               </div>
 
               {/* Cash Flow Chart Container */}
-              <div className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} h-[350px] w-full print:h-[400px] print:w-full print:mb-8 print:break-inside-avoid`}>
-                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2">
+              <div className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} w-full mb-8 break-inside-avoid print:mb-8 print:break-inside-avoid page-break-inside-avoid`}>
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2 print:page-break-after-avoid">
                     <TrendingUp className="w-5 h-5 text-blue-500" />
                     Cash Flow Projection
                 </h3>
-                <ResponsiveContainer width="100%" height="100%">
-                  {renderCashFlowChart()}
-                </ResponsiveContainer>
+                <div className="h-[350px] print:h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                    {renderCashFlowChart()}
+                    </ResponsiveContainer>
+                </div>
               </div>
 
               {/* Wealth Chart Container */}
-              <div className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} h-[350px] w-full print:h-[400px] print:w-full print:mb-10 print:break-inside-avoid`}>
-                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2">
+              <div className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} w-full mb-8 break-inside-avoid print:mb-8 print:break-inside-avoid page-break-inside-avoid`}>
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2 print:page-break-after-avoid">
                     <Building2 className="w-5 h-5 text-blue-500" />
                     Wealth Projection
                 </h3>
-                <ResponsiveContainer width="100%" height="100%">
-                  {renderWealthChart()}
-                </ResponsiveContainer>
+                <div className="h-[350px] print:h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                    {renderWealthChart()}
+                    </ResponsiveContainer>
+                </div>
               </div>
             </div>
 
