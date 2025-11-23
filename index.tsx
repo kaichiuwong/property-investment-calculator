@@ -107,9 +107,6 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
   
   if (state === 'NSW') {
     // NSW 2024 Land Tax Thresholds
-    // General Threshold: $1,075,000
-    // Premium Threshold: $6,571,000
-    // Rate: $100 + 1.6% up to premium, then $88,036 + 2% above premium
     const threshold = 1075000;
     const premiumThreshold = 6571000;
 
@@ -119,8 +116,32 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
         return 100 + (landValue - threshold) * 0.016;
     }
     
-    // Above premium threshold
     return 88036 + (landValue - premiumThreshold) * 0.02;
+  }
+
+  if (state === 'QLD') {
+    // QLD 2024-2025 Land Tax Rates for Individuals
+    // Source: https://qro.qld.gov.au/land-tax/calculate/individual/
+    if (landValue < 600000) return 0;
+    if (landValue < 1000000) return 500 + (landValue - 600000) * 0.01; // $500 + 1.0c for each $1 > $600k
+    if (landValue < 3000000) return 4500 + (landValue - 1000000) * 0.0165; // $4,500 + 1.65c for each $1 > $1m
+    if (landValue < 5000000) return 37500 + (landValue - 3000000) * 0.0125; // $37,500 + 1.25c for each $1 > $3m
+    return 62500 + (landValue - 5000000) * 0.0175; // $62,500 + 1.75c for each $1 > $5m
+  }
+
+  if (state === 'SA') {
+    // SA 2024-2025 Land Tax Rates (General)
+    // Source: https://www.revenuesa.sa.gov.au/landtax/rates-and-thresholds
+    const t1 = 534000;
+    const t2 = 801000;
+    const t3 = 1133000;
+    const t4 = 1466000;
+
+    if (landValue <= t1) return 0;
+    if (landValue <= t2) return (landValue - t1) * 0.005; // 0.5%
+    if (landValue <= t3) return 1335 + (landValue - t2) * 0.01; // $1,335 + 1.0%
+    if (landValue <= t4) return 4655 + (landValue - t3) * 0.02; // $4,655 + 2.0%
+    return 11315 + (landValue - t4) * 0.024; // $11,315 + 2.4%
   }
   
   return 0;
@@ -1327,7 +1348,7 @@ const App = () => {
 
                     <ExpenseSliderRow 
                         label="Body Corp"
-                        infoText="Strata fees. ~1% for Apartments/Townhouses, 0 for Houses. Inflates annually."
+                        infoText="Strata fees. ~1% for Apartments/Townhouses, 0 for others. Inflates annually."
                         value={data.bodyCorp}
                         onChange={(val) => handleInputChange('bodyCorp', val)}
                         isOverridden={!!overrides.bodyCorp}
@@ -1533,8 +1554,13 @@ const App = () => {
             </div>
 
             {/* Projection Chart */}
-            <div className="bg-slate-50 dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors print:shadow-none print:border-none print:bg-white print:p-0 print:mb-6">
+            <div className="bg-slate-50 dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors print:shadow-none print:border-none print:bg-white print:p-0 print:mb-6 mb-8">
               <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 print:mb-2">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    {chartMode === 'cashflow' ? <TrendingUp className="w-5 h-5 text-blue-500"/> : <Building2 className="w-5 h-5 text-blue-500"/>}
+                    {chartMode === 'cashflow' ? 'Cash Flow Projection' : 'Wealth Projection'}
+                  </h3>
+
                   <div className="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-lg print:hidden">
                       <button 
                         onClick={() => setChartMode('cashflow')}
@@ -1548,9 +1574,6 @@ const App = () => {
                       >
                         Wealth Projection
                       </button>
-                  </div>
-                  <div className="hidden print:block text-lg font-bold mb-2 print:hidden">
-                      {chartMode === 'cashflow' ? 'Cash Flow Projection' : 'Wealth Projection'}
                   </div>
 
                   {chartMode === 'wealth' && (
