@@ -1358,16 +1358,16 @@ const App = () => {
                 <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
                     <div className="flex items-center gap-4 bg-white dark:bg-gray-700/50 p-1 rounded-lg border border-gray-200 dark:border-gray-600">
                         <button
-                            onClick={() => setChartMode('wealth')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${chartMode === 'wealth' ? 'bg-slate-100 dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}
-                        >
-                            Wealth Projection
-                        </button>
-                        <button
                              onClick={() => setChartMode('cashflow')}
                              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${chartMode === 'cashflow' ? 'bg-slate-100 dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}
                         >
                             Cash Flow
+                        </button>
+                        <button
+                            onClick={() => setChartMode('wealth')}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${chartMode === 'wealth' ? 'bg-slate-100 dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}
+                        >
+                            Wealth Projection
                         </button>
                     </div>
                     
