@@ -161,6 +161,31 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
     if (landValue <= 11000000) return 66550 + (landValue - 5000000) * 0.0200;
     return 186550 + (landValue - 11000000) * 0.0265;
   }
+
+  if (state === 'ACT') {
+    // ACT 2024-2025 Land Tax Rates (Residential)
+    // Source: https://www.revenue.act.gov.au/land-tax
+    // Fixed Charge: $1,665
+    // Valuation Charge (Annualised rates based on quarterly figures):
+    // 0 - $150,000: 0.54%
+    // $150,001 - $275,000: 0.64%
+    // $275,001+: 1.18%
+    
+    const fixedCharge = 1665;
+    let valuationCharge = 0;
+    
+    if (landValue <= 150000) {
+        valuationCharge = landValue * 0.0054;
+    } else if (landValue <= 275000) {
+        // First 150k is 0.54% ($810)
+        valuationCharge = 810 + (landValue - 150000) * 0.0064;
+    } else {
+        // First 150k @ 0.54% ($810) + Next 125k @ 0.64% ($800) = $1610
+        valuationCharge = 1610 + (landValue - 275000) * 0.0118;
+    }
+    
+    return fixedCharge + valuationCharge;
+  }
   
   return 0;
 };
