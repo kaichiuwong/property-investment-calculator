@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -209,7 +208,7 @@ const InfoTooltip = ({ text }: { text: string }) => (
   </div>
 );
 
-const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { breakdown: any, totalExpenses: number, divisor: number, label: string }) => {
+const OperatingExpensesBreakdown = ({ breakdown, total, divisor }: { breakdown: any, total: number, divisor: number }) => {
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -231,23 +230,20 @@ const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { b
                 className="flex justify-between items-center mb-2 cursor-pointer group"
                 onClick={() => setIsOpen(!isOpen)}
                 role="button"
-                aria-label="Show expense breakdown"
+                aria-label="Show operating expense breakdown"
             >
                 <span className="text-sm text-gray-600 dark:text-gray-300 border-b border-dashed border-gray-400 dark:border-gray-500 group-hover:text-blue-500 transition-colors flex items-center gap-1 print:border-none">
-                    {label} <HelpCircle className="w-3 h-3 text-gray-400 print:hidden" />
+                    Op. Expenses <HelpCircle className="w-3 h-3 text-gray-400 print:hidden" />
                 </span>
                 <span className="text-sm font-medium text-red-600 dark:text-red-400">
-                    -{fmt(totalExpenses)}
+                    -{fmt(total)}
                 </span>
             </div>
             {isOpen && (
                 <div className="absolute left-0 bottom-full mb-2 w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-4 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 text-sm print:hidden">
-                     <h4 className="font-semibold mb-3 pb-2 border-b border-gray-100 dark:border-gray-700 text-xs uppercase tracking-wide">Expense Breakdown</h4>
+                     <h4 className="font-semibold mb-3 pb-2 border-b border-gray-100 dark:border-gray-700 text-xs uppercase tracking-wide">Op. Expenses Breakdown</h4>
                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                        <div className="flex justify-between font-medium text-red-600 dark:text-red-400">
-                            <span>Mortgage</span>
-                            <span>{fmt(breakdown.repayment)}</span>
-                        </div>
+                        {/* Mortgage/Repayment excluded from this list */}
                         {breakdown.council > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Council Rates</span><span>{fmt(breakdown.council)}</span></div>}
                         {breakdown.landTax > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Land Tax</span><span>{fmt(breakdown.landTax)}</span></div>}
                         {breakdown.bodyCorp > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Body Corp</span><span>{fmt(breakdown.bodyCorp)}</span></div>}
@@ -258,7 +254,7 @@ const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { b
                      </div>
                      <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700 flex justify-between font-bold text-gray-900 dark:text-white">
                         <span>Total</span>
-                        <span>{fmt(totalExpenses)}</span>
+                        <span>{fmt(total)}</span>
                      </div>
                      <div className="absolute -bottom-2 left-6 w-4 h-4 bg-white dark:bg-gray-800 border-b border-r border-gray-200 dark:border-gray-700 rotate-45"></div>
                 </div>
@@ -1336,7 +1332,11 @@ const App = () => {
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
                         <span className="text-sm font-medium text-gray-900 dark:text-white print:text-black">${Math.round(currentStats.rentalIncome / 52).toLocaleString()}</span>
                     </div>
-                    <ExpensesWithBreakdown breakdown={currentStats.breakdown} totalExpenses={currentStats.expenses} divisor={52} label="Expenses" />
+                    <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm text-gray-600 dark:text-gray-300">Mortgage</span>
+                        <span className="text-sm font-medium text-red-600 dark:text-red-400">-${Math.round(currentStats.breakdown.repayment / 52).toLocaleString()}</span>
+                    </div>
+                    <OperatingExpensesBreakdown breakdown={currentStats.breakdown} total={currentStats.operatingExpenses} divisor={52} />
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-200 print:text-black">Net</span>
                         <span className={`text-sm font-bold ${currentStats.netCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} print:text-black`}>
@@ -1351,7 +1351,11 @@ const App = () => {
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
                         <span className="text-sm font-medium text-gray-900 dark:text-white print:text-black">${Math.round(currentStats.rentalIncome / 12).toLocaleString()}</span>
                     </div>
-                    <ExpensesWithBreakdown breakdown={currentStats.breakdown} totalExpenses={currentStats.expenses} divisor={12} label="Expenses" />
+                    <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm text-gray-600 dark:text-gray-300">Mortgage</span>
+                        <span className="text-sm font-medium text-red-600 dark:text-red-400">-${Math.round(currentStats.breakdown.repayment / 12).toLocaleString()}</span>
+                    </div>
+                    <OperatingExpensesBreakdown breakdown={currentStats.breakdown} total={currentStats.operatingExpenses} divisor={12} />
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-200 print:text-black">Net</span>
                         <span className={`text-sm font-bold ${currentStats.netCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} print:text-black`}>
@@ -1366,7 +1370,11 @@ const App = () => {
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
                         <span className="text-sm font-medium text-gray-900 dark:text-white print:text-black">${Math.round(currentStats.rentalIncome).toLocaleString()}</span>
                     </div>
-                    <ExpensesWithBreakdown breakdown={currentStats.breakdown} totalExpenses={currentStats.expenses} divisor={1} label="Expenses" />
+                    <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm text-gray-600 dark:text-gray-300">Mortgage</span>
+                        <span className="text-sm font-medium text-red-600 dark:text-red-400">-${Math.round(currentStats.breakdown.repayment).toLocaleString()}</span>
+                    </div>
+                    <OperatingExpensesBreakdown breakdown={currentStats.breakdown} total={currentStats.operatingExpenses} divisor={1} />
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-200 print:text-black">Net</span>
                         <span className={`text-sm font-bold ${currentStats.netCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} print:text-black`}>
