@@ -94,10 +94,8 @@ const ESTIMATED_GROWTH_RATE: Record<PropertyType, number> = {
 // --- Helper Functions ---
 
 const calculateLandTax = (landValue: number, state: AustralianState): number => {
-  // Simplified VIC 2024 Investment Land Tax scales
-  if (state !== 'VIC' && state !== 'NSW') return 0; // Simplified for demo, focusing on VIC as default
-
   if (state === 'VIC') {
+    // Simplified VIC 2024 Investment Land Tax scales
     if (landValue < 50000) return 0;
     if (landValue < 250000) return 0 + (landValue - 50000) * 0.002; // $0 + 0.2%
     if (landValue < 600000) return 400 + (landValue - 250000) * 0.005; // $400 + 0.5%
@@ -105,6 +103,24 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
     if (landValue < 1800000) return 5350 + (landValue - 1000000) * 0.013; // $5350 + 1.3%
     if (landValue < 3000000) return 15750 + (landValue - 1800000) * 0.018; // $15750 + 1.8%
     return 37350 + (landValue - 3000000) * 0.02; // >3m
+  }
+  
+  if (state === 'NSW') {
+    // NSW 2024 Land Tax Thresholds
+    // General Threshold: $1,075,000
+    // Premium Threshold: $6,571,000
+    // Rate: $100 + 1.6% up to premium, then $88,036 + 2% above premium
+    const threshold = 1075000;
+    const premiumThreshold = 6571000;
+
+    if (landValue < threshold) return 0;
+    
+    if (landValue < premiumThreshold) {
+        return 100 + (landValue - threshold) * 0.016;
+    }
+    
+    // Above premium threshold
+    return 88036 + (landValue - premiumThreshold) * 0.02;
   }
   
   return 0;
@@ -635,7 +651,12 @@ const App = () => {
   };
 
   const handlePrint = () => {
-      window.print();
+      setIsPrinting(true);
+      // Delay printing slightly to allow React to render the second chart (which is usually hidden)
+      setTimeout(() => {
+          window.print();
+          setIsPrinting(false);
+      }, 200);
   };
 
   // Close suggestions on click outside
