@@ -24,8 +24,6 @@ import {
   RefreshCw,
   ChevronDown,
   Sparkles,
-  PieChart as PieChartIcon,
-  Home,
   Sun,
   Moon,
   LandPlot,
@@ -139,12 +137,6 @@ const ESTIMATED_GROWTH_RATE: Record<PropertyType, number> = {
 };
 
 // --- Helper Functions ---
-
-const estimateStampDuty = (price: number, _state: AustralianState): number => {
-  // Simplified approximation for demo
-  const rate = 0.055; 
-  return price * rate;
-};
 
 const calculateLandTax = (landValue: number, state: AustralianState): number => {
   // Simplified VIC 2024 Investment Land Tax scales
@@ -646,10 +638,7 @@ const App = () => {
   // --- Derived Calculations ---
 
   const loanAmount = useMemo(() => data.price * (data.lvr / 100), [data.price, data.lvr]);
-  const deposit = useMemo(() => data.price - loanAmount, [data.price, loanAmount]);
-  const stampDuty = useMemo(() => estimateStampDuty(data.price, data.state), [data.price, data.state]);
-  const totalUpfront = deposit + stampDuty + 2000;
-
+  
   const monthlyRepayment = useMemo(() => {
     const r = data.interestRate / 100 / 12;
     const n = data.loanTerm * 12;
