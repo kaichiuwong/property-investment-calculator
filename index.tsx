@@ -805,7 +805,7 @@ const App = () => {
                     <MapPin className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                     <input 
                       type="text"
-                      className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
+                      className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                       placeholder="e.g. Richmond"
                       value={data.suburb}
                       onChange={handleSuburbChange}
@@ -840,7 +840,7 @@ const App = () => {
                             <Hash className="absolute left-3 top-2.5 w-3 h-3 text-gray-400" />
                             <input 
                                 type="text"
-                                className="w-full pl-8 pr-2 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                                className="w-full pl-8 pr-2 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                                 placeholder="3121"
                                 value={data.postcode}
                                 onChange={handlePostcodeChange}
@@ -867,7 +867,7 @@ const App = () => {
                         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">State</label>
                         <div className="relative">
                             <select 
-                            className="w-full pl-2 pr-6 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                            className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                             value={data.state}
                             onChange={(e) => handleInputChange('state', e.target.value)}
                             >
@@ -883,7 +883,7 @@ const App = () => {
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
                     <div className="relative">
                         <select 
-                        className="w-full pl-2 pr-6 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                        className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                         value={data.propertyType}
                         onChange={(e) => {
                             const newType = e.target.value as PropertyType;
@@ -901,7 +901,7 @@ const App = () => {
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Purchase Price</label>
                   <FormattedNumberInput
                       step={1000}
-                      className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                      className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                       value={data.price}
                       onChange={(val: number) => handleInputChange('price', val)}
                       icon={DollarSign}
@@ -920,7 +920,7 @@ const App = () => {
                         {overrides.landValue && <ResetButton field="landValue" />}
                     </label>
                     <FormattedNumberInput
-                        className={`w-full pl-10 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-800/50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors ${overrides.landValue ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
+                        className={`w-full pl-10 pr-3 py-2 text-base md:text-sm bg-gray-50 dark:bg-gray-800/50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors ${overrides.landValue ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
                         value={data.landValue}
                         onChange={(val: number) => handleInputChange('landValue', val)}
                         icon={LandPlot}
@@ -942,7 +942,7 @@ const App = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">LVR (%)</label>
                     <input 
                       type="number"
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                      className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                       value={data.lvr}
                       onChange={(e) => handleInputChange('lvr', Number(e.target.value))}
                     />
@@ -952,7 +952,7 @@ const App = () => {
                     <input 
                       type="number"
                       step="0.01"
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                      className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                       value={data.interestRate}
                       onChange={(e) => handleInputChange('interestRate', Number(e.target.value))}
                     />
@@ -989,7 +989,7 @@ const App = () => {
                     <input 
                       type="number"
                       step={10}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                      className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                       value={data.weeklyRent}
                       onChange={(e) => handleInputChange('weeklyRent', Number(e.target.value))}
                     />
@@ -1012,7 +1012,7 @@ const App = () => {
                                 {overrides.councilRates && <ResetButton field="councilRates" />}
                             </label>
                             <FormattedNumberInput
-                                className={`w-full px-3 py-1.5 text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
+                                className={`w-full px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
                                 value={data.councilRates}
                                 onChange={(val: number) => handleInputChange('councilRates', val)}
                             />
@@ -1023,7 +1023,7 @@ const App = () => {
                                 {overrides.insurance && <ResetButton field="insurance" />}
                             </label>
                             <FormattedNumberInput
-                                className={`w-full px-3 py-1.5 text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.insurance ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
+                                className={`w-full px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.insurance ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
                                 value={data.insurance}
                                 onChange={(val: number) => handleInputChange('insurance', val)}
                             />
@@ -1037,7 +1037,7 @@ const App = () => {
                                 {overrides.landTax && <ResetButton field="landTax" />}
                             </label>
                             <FormattedNumberInput
-                                className={`w-full px-3 py-1.5 text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
+                                className={`w-full px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
                                 value={data.landTax}
                                 onChange={(val: number) => handleInputChange('landTax', val)}
                             />
@@ -1048,7 +1048,7 @@ const App = () => {
                                 {overrides.bodyCorp && <ResetButton field="bodyCorp" />}
                             </label>
                             <FormattedNumberInput
-                                className={`w-full px-3 py-1.5 text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.bodyCorp ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
+                                className={`w-full px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.bodyCorp ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
                                 value={data.bodyCorp}
                                 onChange={(val: number) => handleInputChange('bodyCorp', val)}
                             />
@@ -1061,7 +1061,7 @@ const App = () => {
                                 Water Rates <InfoTooltip text="Fixed annual estimate (~$840). Inflates annually." />
                             </label>
                             <FormattedNumberInput
-                                className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-white"
+                                className="w-full px-3 py-1.5 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-white"
                                 value={data.waterRates}
                                 placeholder="840"
                                 onChange={(val: number) => handleInputChange('waterRates', val)}
@@ -1072,7 +1072,7 @@ const App = () => {
                                 Maintenance <InfoTooltip text="Annual allowance for repairs. Inflates annually." />
                             </label>
                             <FormattedNumberInput
-                                className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-white"
+                                className="w-full px-3 py-1.5 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-white"
                                 value={data.maintenance}
                                 onChange={(val: number) => handleInputChange('maintenance', val)}
                             />
@@ -1105,8 +1105,8 @@ const App = () => {
           {/* Results Column */}
           <div className="lg:col-span-8 space-y-6">
 
-             {/* Time Travel Slider */}
-             <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors">
+             {/* Time Travel Slider - STICKY TOP */}
+             <div className="sticky top-0 z-40 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors mb-6">
                 <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -1206,7 +1206,7 @@ const App = () => {
                          <div className="flex items-center gap-1 bg-white dark:bg-gray-800 px-2 py-1 rounded border dark:border-gray-600">
                              <input 
                                 type="number" 
-                                className="w-12 bg-transparent text-right outline-none text-sm font-medium text-gray-900 dark:text-white"
+                                className="w-12 bg-transparent text-right outline-none text-base md:text-sm font-medium text-gray-900 dark:text-white"
                                 value={data.rentalGrowthRate}
                                 onChange={(e) => handleInputChange('rentalGrowthRate', Number(e.target.value))}
                             />
@@ -1243,7 +1243,7 @@ const App = () => {
                          <div className="flex items-center gap-1 bg-white dark:bg-gray-800 px-2 py-1 rounded border dark:border-gray-600">
                              <input 
                                 type="number" 
-                                className="w-12 bg-transparent text-right outline-none text-sm font-medium text-gray-900 dark:text-white"
+                                className="w-12 bg-transparent text-right outline-none text-base md:text-sm font-medium text-gray-900 dark:text-white"
                                 value={data.inflationRate}
                                 onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
                             />
@@ -1364,7 +1364,7 @@ const App = () => {
                             <span className="text-gray-500 dark:text-gray-300">Capital Growth:</span>
                             <input 
                                 type="number" 
-                                className="w-10 bg-transparent font-medium text-right outline-none border-b border-gray-300 dark:border-gray-500 focus:border-blue-500 text-gray-900 dark:text-white"
+                                className="w-10 bg-transparent font-medium text-right outline-none text-base md:text-sm border-b border-gray-300 dark:border-gray-500 focus:border-blue-500 text-gray-900 dark:text-white"
                                 value={data.capitalGrowth}
                                 onChange={(e) => handleInputChange('capitalGrowth', Number(e.target.value))}
                             />
