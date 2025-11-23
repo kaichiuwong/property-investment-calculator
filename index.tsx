@@ -436,6 +436,9 @@ const App = () => {
     return false;
   });
 
+  // Print state
+  const [isPrinting, setIsPrinting] = useState(false);
+
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -443,6 +446,20 @@ const App = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  // Listen for print events to render both charts
+  useEffect(() => {
+    const handleBeforePrint = () => setIsPrinting(true);
+    const handleAfterPrint = () => setIsPrinting(false);
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+
+    return () => {
+        window.removeEventListener('beforeprint', handleBeforePrint);
+        window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
 
   // Initial State
   const [data, setData] = useState<CalculatorState>(getInitialState);
@@ -854,6 +871,89 @@ const App = () => {
         <Undo2 className="w-3 h-3" /> 
         <span className="text-[10px] font-medium">Auto</span>
     </button>
+  );
+
+  const renderCashFlowChart = () => (
+      <ComposedChart 
+        data={projections}
+        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+      >
+        <defs>
+            <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+            </linearGradient>
+            <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+            </linearGradient>
+            <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+            </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#374151" : "#e5e7eb"} />
+        <XAxis 
+            dataKey="year" 
+            stroke={darkMode ? "#9ca3af" : "#6b7280"}
+            tick={{fontSize: 12}}
+            tickMargin={10}
+        />
+        <YAxis 
+            tickFormatter={(val) => `$${val/1000}k`}
+            stroke={darkMode ? "#9ca3af" : "#6b7280"}
+            tick={{fontSize: 12}}
+        />
+        <RechartsTooltip 
+            content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} />} 
+            cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
+        />
+        <Legend />
+        <ReferenceLine y={0} stroke={darkMode ? "#e5e7eb" : "#000"} strokeWidth={2} />
+        
+        <Area type="monotone" dataKey="rentalIncome" name="Rental Income" stroke="#10b981" strokeWidth={2} fill="url(#colorIncome)" />
+        <Area type="monotone" dataKey="expenses" name="Total Expenses" stroke="#f59e0b" strokeWidth={2} fill="url(#colorExpenses)" />
+        <Area type="monotone" dataKey="netCashFlow" name="Net Cash Flow" stroke="#6366f1" strokeWidth={2} fill="url(#colorNet)" />
+      </ComposedChart>
+  );
+
+  const renderWealthChart = () => (
+      <ComposedChart 
+        data={projections}
+        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+      >
+        <defs>
+          <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+          </linearGradient>
+          <linearGradient id="colorLoan" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+            <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#374151" : "#e5e7eb"} />
+        <XAxis 
+            dataKey="year" 
+            stroke={darkMode ? "#9ca3af" : "#6b7280"}
+            tick={{fontSize: 12}}
+            tickMargin={10}
+        />
+        <YAxis 
+            tickFormatter={(val) => `$${val/1000}k`}
+            stroke={darkMode ? "#9ca3af" : "#6b7280"}
+            tick={{fontSize: 12}}
+        />
+        <RechartsTooltip 
+            content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} />} 
+            cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
+        />
+        <Legend />
+        <ReferenceLine y={data.price} stroke="#9ca3af" strokeDasharray="3 3" label={{ value: "Purchase Price", position: 'insideTopLeft', fill: darkMode ? "#9ca3af" : "#6b7280", fontSize: 10 }} />
+        <Area type="monotone" dataKey="value" name="Property Value" stroke="#3b82f6" fillOpacity={1} fill="url(#colorValue)" strokeWidth={2} />
+        <Area type="monotone" dataKey="loan" name="Loan Balance" stroke="#ef4444" fillOpacity={1} fill="url(#colorLoan)" strokeWidth={2} />
+        <Line type="monotone" dataKey="equity" name="Equity" stroke="#10b981" strokeWidth={3} dot={false} />
+      </ComposedChart>
   );
 
   return (
@@ -1429,12 +1529,12 @@ const App = () => {
                         Wealth Projection
                       </button>
                   </div>
-                  <div className="hidden print:block text-lg font-bold mb-2">
+                  <div className="hidden print:block text-lg font-bold mb-2 print:hidden">
                       {chartMode === 'cashflow' ? 'Cash Flow Projection' : 'Wealth Projection'}
                   </div>
 
                   {chartMode === 'wealth' && (
-                       <div className="flex items-center gap-2">
+                       <div className="flex items-center gap-2 print:hidden">
                           <label className="text-sm text-gray-600 dark:text-gray-400">Property Value Growth:</label>
                           <div className="flex items-center gap-1">
                                 <input 
@@ -1450,73 +1550,19 @@ const App = () => {
                   )}
               </div>
 
-              <div className="h-[350px] w-full print:h-[400px] print:w-full">
+              {/* Cash Flow Chart Container */}
+              <div className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} h-[350px] w-full print:h-[400px] print:w-full print:mb-8`}>
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900">Cash Flow Projection</h3>
                 <ResponsiveContainer width="100%" height="100%">
-                  {chartMode === 'wealth' ? (
-                      <ComposedChart 
-                        data={projections}
-                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                      >
-                        <defs>
-                          <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                          </linearGradient>
-                          <linearGradient id="colorLoan" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#374151" : "#e5e7eb"} />
-                        <XAxis 
-                            dataKey="year" 
-                            stroke={darkMode ? "#9ca3af" : "#6b7280"}
-                            tick={{fontSize: 12}}
-                            tickMargin={10}
-                        />
-                        <YAxis 
-                            tickFormatter={(val) => `$${val/1000}k`}
-                            stroke={darkMode ? "#9ca3af" : "#6b7280"}
-                            tick={{fontSize: 12}}
-                        />
-                        <RechartsTooltip 
-                            content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} />} 
-                            cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
-                        />
-                        <Legend />
-                        <ReferenceLine y={data.price} stroke="#9ca3af" strokeDasharray="3 3" label={{ value: "Purchase Price", position: 'insideTopLeft', fill: darkMode ? "#9ca3af" : "#6b7280", fontSize: 10 }} />
-                        <Area type="monotone" dataKey="value" name="Property Value" stroke="#3b82f6" fillOpacity={1} fill="url(#colorValue)" strokeWidth={2} />
-                        <Area type="monotone" dataKey="loan" name="Loan Balance" stroke="#ef4444" fillOpacity={1} fill="url(#colorLoan)" strokeWidth={2} />
-                        <Line type="monotone" dataKey="equity" name="Equity" stroke="#10b981" strokeWidth={3} dot={false} />
-                      </ComposedChart>
-                  ) : (
-                      <LineChart 
-                        data={projections}
-                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#374151" : "#e5e7eb"} />
-                        <XAxis 
-                            dataKey="year" 
-                            stroke={darkMode ? "#9ca3af" : "#6b7280"}
-                            tick={{fontSize: 12}}
-                            tickMargin={10}
-                        />
-                        <YAxis 
-                            tickFormatter={(val) => `$${val/1000}k`}
-                            stroke={darkMode ? "#9ca3af" : "#6b7280"}
-                            tick={{fontSize: 12}}
-                        />
-                        <RechartsTooltip 
-                            content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} />} 
-                            cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
-                        />
-                        <Legend />
-                        <ReferenceLine y={0} stroke={darkMode ? "#e5e7eb" : "#000"} strokeWidth={2} />
-                        <Line type="monotone" dataKey="rentalIncome" name="Rental Income" stroke="#10b981" strokeWidth={2} dot={false} />
-                        <Line type="monotone" dataKey="expenses" name="Total Expenses" stroke="#f59e0b" strokeWidth={2} dot={false} />
-                        <Line type="monotone" dataKey="netCashFlow" name="Net Cash Flow" stroke="#6366f1" strokeWidth={2} dot={false} />
-                      </LineChart>
-                  )}
+                  {renderCashFlowChart()}
+                </ResponsiveContainer>
+              </div>
+
+              {/* Wealth Chart Container */}
+              <div className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} h-[350px] w-full print:h-[400px] print:w-full`}>
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900">Wealth Projection</h3>
+                <ResponsiveContainer width="100%" height="100%">
+                  {renderWealthChart()}
                 </ResponsiveContainer>
               </div>
             </div>
