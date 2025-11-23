@@ -993,7 +993,7 @@ const App = () => {
             
             {/* Property Details Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-none print:p-0">
-              <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-gray-900 print:border-b print:border-gray-200 print:pb-2">
+              <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-blue-800 print:border-b print:border-gray-200 print:pb-2">
                 <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400 print:hidden" />
                 Property Details
               </h2>
@@ -1094,7 +1094,7 @@ const App = () => {
 
             {/* Loan Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-none print:p-0">
-              <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-gray-900 print:border-b print:border-gray-200 print:pb-2">
+              <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-blue-800 print:border-b print:border-gray-200 print:pb-2">
                 <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400 print:hidden" />
                 Loan & Finance
               </h2>
@@ -1117,27 +1117,35 @@ const App = () => {
                     <div className="text-right text-sm text-gray-500 dark:text-gray-400 mt-1 print:text-left print:font-mono print:text-gray-900 print:mt-0 print:text-sm">{data.loanTerm} years</div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 print:border-none print:pt-2 print:flex print:justify-between print:items-center print:border-b print:border-gray-100 print:pb-1">
-                  <div className="flex justify-between items-center mb-1 print:mb-0 print:w-auto">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 print:text-sm print:text-gray-600">Weekly Rent (per week)</label>
-                    <button onClick={() => fetchRentEstimate()} disabled={!data.suburb || rentEstimateLoading} className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50 print:hidden">
+                {/* Screen version of Weekly Rent */}
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 print:hidden">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Weekly Rent (per week)</label>
+                    <button onClick={() => fetchRentEstimate()} disabled={!data.suburb || rentEstimateLoading} className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50">
                       {rentEstimateLoading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                       Estimate
                     </button>
                   </div>
-                  <div className="flex items-center gap-3 print:block print:w-auto">
-                        <input type="range" min="0" max="10000" step="10" className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden" value={data.weeklyRent || 0} onChange={(e) => handleInputChange('weeklyRent', Number(e.target.value))} />
-                        <div className="w-32 relative print:w-auto">
-                           <FormattedNumberInput icon={DollarSign} className="w-full pl-10 pr-2 py-2 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all print:border-none print:p-0 print:font-mono print:text-sm" value={data.weeklyRent} onChange={(val: number) => handleInputChange('weeklyRent', val)} step={10} min={0} max={10000} />
+                  <div className="flex items-center gap-3">
+                        <input type="range" min="0" max="10000" step="10" className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600" value={data.weeklyRent || 0} onChange={(e) => handleInputChange('weeklyRent', Number(e.target.value))} />
+                        <div className="w-32 relative">
+                           <FormattedNumberInput icon={DollarSign} className="w-full pl-10 pr-2 py-2 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={data.weeklyRent} onChange={(val: number) => handleInputChange('weeklyRent', val)} step={10} min={0} max={10000} />
                         </div>
                   </div>
                 </div>
+
+                {/* Print version of Weekly Rent */}
+                <div className="hidden print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
+                    <label className="block text-sm font-medium text-gray-600 print:mb-0">Weekly Rent</label>
+                    <FormattedNumberInput className="print:border-none print:p-0 print:text-right print:font-mono print:text-sm" value={data.weeklyRent} onChange={() => {}} step={10} min={0} />
+                </div>
+
               </div>
             </div>
 
             {/* Expenses Breakdown Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-none print:p-0 print:col-span-2">
-                 <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-gray-900 print:border-b print:border-gray-200 print:pb-2">
+                 <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-blue-800 print:border-b print:border-gray-200 print:pb-2">
                     <TrendingUp className="w-5 h-5 text-red-600 dark:text-red-400 print:hidden" />
                     Annual Expenses
                 </h2>
@@ -1335,7 +1343,7 @@ const App = () => {
               </div>
 
               <div className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
                     Cash Flow Projection
                 </h3>
                 <div className="h-[350px] print:h-[300px] w-full">
@@ -1346,7 +1354,7 @@ const App = () => {
               </div>
 
               <div className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
                     Wealth Projection
                 </h3>
                 <div className="h-[350px] print:h-[300px] w-full">
@@ -1360,7 +1368,7 @@ const App = () => {
             {/* AI Analysis Section */}
             {aiAnalysis && (
               <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-slate-800 rounded-xl p-6 border border-purple-100 dark:border-gray-700 transition-colors print:shadow-none print:border-gray-200 print:bg-white print:break-inside-avoid print:p-0">
-                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-purple-900 dark:text-purple-300 print:text-gray-900 print:border-b print:border-gray-200 print:pb-2">
+                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-purple-900 dark:text-purple-300 print:text-blue-800 print:border-b print:border-gray-200 print:pb-2">
                     <Sparkles className="w-5 h-5 print:hidden" />
                     AI Investment Analysis
                 </h2>
