@@ -72,6 +72,7 @@ interface SuburbItem {
   postcode: string;
 }
 
+// Fix: Use commas instead of pipes for array elements
 const PROPERTY_TYPES: PropertyType[] = ['House', 'Townhouse', 'Apartment', 'Home & Land', 'Old Home'];
 const STATES: AustralianState[] = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'];
 
@@ -132,16 +133,17 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
   if (state === 'SA') {
     // SA 2024-2025 Land Tax Rates (General)
     // Source: https://www.revenuesa.sa.gov.au/landtax/rates-and-thresholds
-    const t1 = 534000;
-    const t2 = 801000;
-    const t3 = 1133000;
-    const t4 = 1466000;
+    // Up to $534,000: Nil
+    // $534,001 to $801,000: $0.50 for every $100 or part (0.5%)
+    // $801,001 to $1,133,000: $1,335 + $1.00 for every $100 or part (1.0%)
+    // $1,133,001 to $1,466,000: $4,655 + $2.00 for every $100 or part (2.0%)
+    // Over $1,466,000: $11,315 + $2.40 for every $100 or part (2.4%)
 
-    if (landValue <= t1) return 0;
-    if (landValue <= t2) return (landValue - t1) * 0.005; // 0.5%
-    if (landValue <= t3) return 1335 + (landValue - t2) * 0.01; // $1,335 + 1.0%
-    if (landValue <= t4) return 4655 + (landValue - t3) * 0.02; // $4,655 + 2.0%
-    return 11315 + (landValue - t4) * 0.024; // $11,315 + 2.4%
+    if (landValue <= 534000) return 0;
+    if (landValue <= 801000) return (landValue - 534000) * 0.005; 
+    if (landValue <= 1133000) return 1335 + (landValue - 801000) * 0.01;
+    if (landValue <= 1466000) return 4655 + (landValue - 1133000) * 0.02;
+    return 11315 + (landValue - 1466000) * 0.024;
   }
   
   return 0;
@@ -1555,7 +1557,7 @@ const App = () => {
 
             {/* Projection Chart */}
             <div className="bg-slate-50 dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors print:shadow-none print:border-none print:bg-white print:p-0 print:mb-6 mb-8">
-              <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 print:mb-2">
+              <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 print:mb-2 print:hidden">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     {chartMode === 'cashflow' ? <TrendingUp className="w-5 h-5 text-blue-500"/> : <Building2 className="w-5 h-5 text-blue-500"/>}
                     {chartMode === 'cashflow' ? 'Cash Flow Projection' : 'Wealth Projection'}
@@ -1594,16 +1596,22 @@ const App = () => {
               </div>
 
               {/* Cash Flow Chart Container */}
-              <div className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} h-[350px] w-full print:h-[400px] print:w-full print:mb-8`}>
-                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900">Cash Flow Projection</h3>
+              <div className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} h-[350px] w-full print:h-[400px] print:w-full print:mb-8 print:break-inside-avoid`}>
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-blue-500" />
+                    Cash Flow Projection
+                </h3>
                 <ResponsiveContainer width="100%" height="100%">
                   {renderCashFlowChart()}
                 </ResponsiveContainer>
               </div>
 
               {/* Wealth Chart Container */}
-              <div className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} h-[350px] w-full print:h-[400px] print:w-full`}>
-                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900">Wealth Projection</h3>
+              <div className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} h-[350px] w-full print:h-[400px] print:w-full print:mb-10 print:break-inside-avoid`}>
+                <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-blue-500" />
+                    Wealth Projection
+                </h3>
                 <ResponsiveContainer width="100%" height="100%">
                   {renderWealthChart()}
                 </ResponsiveContainer>
