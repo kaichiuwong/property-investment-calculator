@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -32,7 +31,8 @@ import {
   Clock,
   Hash,
   RotateCcw,
-  Printer
+  Printer,
+  Percent
 } from 'lucide-react';
 import './index.css';
 import { SUBURB_DB_RAW } from './suburbs';
@@ -365,6 +365,9 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
           if (min !== undefined) next = Math.max(min, next);
           if (max !== undefined) next = Math.min(max, next);
           
+          // Fix floating point precision issues
+          next = Math.round(next * 100) / 100;
+          
           setInputValue(next.toString());
           onChange(next);
       }
@@ -372,7 +375,7 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
 
   return (
     <div className="relative w-full">
-        {Icon && <Icon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none z-10 print:hidden" />}
+        {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10 print:hidden" />}
         <input
             type="text" // Using text to allow commas
             inputMode="decimal" // Helps mobile keyboards
@@ -495,11 +498,12 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
                 />
                 <div className="w-24 print:w-auto">
                      <FormattedNumberInput
-                        className={`w-full px-2 py-1 text-right text-sm border rounded-md bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono`}
+                        className={`w-full pl-8 pr-2 py-1 text-right text-sm border rounded-md bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono`}
                         value={value}
                         onChange={onChange}
                         max={max}
                         min={0}
+                        icon={DollarSign}
                     />
                 </div>
             </div>
@@ -515,6 +519,16 @@ const App = () => {
     }
     return false;
   });
+
+  // Mobile state detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Print state
   const [isPrinting, setIsPrinting] = useState(false);
@@ -995,6 +1009,7 @@ const App = () => {
         <RechartsTooltip 
             content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} />} 
             cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
+            position={isMobile ? { x: 0, y: 0 } : undefined}
         />
         <Legend />
         <ReferenceLine y={0} stroke={darkMode ? "#e5e7eb" : "#000"} strokeWidth={2} />
@@ -1036,6 +1051,7 @@ const App = () => {
         <RechartsTooltip 
             content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} />} 
             cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
+            position={isMobile ? { x: 0, y: 0 } : undefined}
         />
         <Legend />
         <ReferenceLine y={data.price} stroke="#9ca3af" strokeDasharray="3 3" label={{ value: "Purchase Price", position: 'insideTopLeft', fill: darkMode ? "#9ca3af" : "#6b7280", fontSize: 10 }} />
@@ -1276,23 +1292,21 @@ const App = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">LVR (%)</label>
-                    <input 
-                      type="number"
+                    <FormattedNumberInput
                       className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto"
                       value={data.lvr}
-                      onChange={(e) => handleInputChange('lvr', Number(e.target.value))}
+                      onChange={(val: number) => handleInputChange('lvr', val)}
                       min={0}
                       max={100}
                     />
                   </div>
                   <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Rate (%)</label>
-                    <input 
-                      type="number"
-                      step="0.01"
+                    <FormattedNumberInput
+                      step={0.01}
                       className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto"
                       value={data.interestRate}
-                      onChange={(e) => handleInputChange('interestRate', Number(e.target.value))}
+                      onChange={(val: number) => handleInputChange('interestRate', val)}
                       min={0}
                       max={200}
                     />
@@ -1364,10 +1378,11 @@ const App = () => {
                                 {overrides.councilRates && <ResetButton field="councilRates" />}
                             </label>
                             <FormattedNumberInput
-                                className={`w-full px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`}
+                                className={`w-full pl-8 px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`}
                                 value={data.councilRates}
                                 onChange={(val: number) => handleInputChange('councilRates', val)}
                                 min={0}
+                                icon={DollarSign}
                             />
                         </div>
                         <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
@@ -1376,10 +1391,11 @@ const App = () => {
                                 {overrides.landTax && <ResetButton field="landTax" />}
                             </label>
                             <FormattedNumberInput
-                                className={`w-full px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`}
+                                className={`w-full pl-8 px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`}
                                 value={data.landTax}
                                 onChange={(val: number) => handleInputChange('landTax', val)}
                                 min={0}
+                                icon={DollarSign}
                             />
                         </div>
                     </div>
@@ -1431,7 +1447,15 @@ const App = () => {
                                 value={data.propertyManagerRate}
                                 onChange={(e) => handleInputChange('propertyManagerRate', Number(e.target.value))}
                             />
-                            <span className="text-xs font-mono w-16 text-right text-gray-900 dark:text-white print:text-sm">${Math.round(currentStats.breakdown.pmFee).toLocaleString()}</span>
+                            <span className="text-xs font-mono w-16 text-right text-gray-900 dark:text-white print:text-sm">
+                                <FormattedNumberInput
+                                    className="w-full py-1 text-right bg-transparent outline-none"
+                                    value={data.propertyManagerRate}
+                                    onChange={(val: number) => handleInputChange('propertyManagerRate', val)}
+                                    min={0}
+                                    max={20}
+                                />
+                            </span>
                         </div>
                     </div>
                     
@@ -1447,7 +1471,7 @@ const App = () => {
           <div className="lg:col-span-8 space-y-6">
 
              {/* Time Travel Slider - Floating Card UI */}
-             <div className="sticky top-4 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-4 mb-6 mx-4 md:mx-0 print:hidden">
+             <div className="sticky top-4 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-4 mb-6 print:hidden">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-600" />
@@ -1501,12 +1525,11 @@ const App = () => {
                     <span>Yield: {currentGrossYield.toFixed(2)}%</span>
                     <div className="flex items-center gap-1">
                         <span>Growth:</span>
-                        <input 
-                            type="number" 
-                            step="0.1"
-                            className="w-12 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none print:border-none print:bg-transparent print:p-0 print:w-auto"
+                        <FormattedNumberInput
+                            step={0.1}
+                            className="w-12 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none print:border-none print:bg-transparent print:p-0 print:w-auto text-right"
                             value={data.rentalGrowthRate}
-                            onChange={(e) => handleInputChange('rentalGrowthRate', Number(e.target.value))}
+                            onChange={(val: number) => handleInputChange('rentalGrowthRate', val)}
                         />
                         <span>%</span>
                     </div>
@@ -1525,12 +1548,11 @@ const App = () => {
                     <span>Inc. Mortgage</span>
                     <div className="flex items-center gap-1">
                         <span>Inflation:</span>
-                        <input 
-                            type="number" 
-                            step="0.1"
-                            className="w-10 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none print:border-none print:bg-transparent print:p-0 print:w-auto"
+                        <FormattedNumberInput 
+                            step={0.1}
+                            className="w-10 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none print:border-none print:bg-transparent print:p-0 print:w-auto text-right"
                             value={data.inflationRate}
-                            onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
+                            onChange={(val: number) => handleInputChange('inflationRate', val)}
                         />
                         <span>%</span>
                     </div>
@@ -1628,12 +1650,11 @@ const App = () => {
                        <div className="flex items-center gap-2 print:hidden">
                           <label className="text-sm text-gray-600 dark:text-gray-400">Property Value Growth:</label>
                           <div className="flex items-center gap-1">
-                                <input 
-                                    type="number"
-                                    step="0.1"
-                                    className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white print:border-none print:bg-transparent print:p-0 print:w-auto"
+                                <FormattedNumberInput
+                                    step={0.1}
+                                    className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white print:border-none print:bg-transparent print:p-0 print:w-auto text-right"
                                     value={data.capitalGrowth}
-                                    onChange={(e) => handleInputChange('capitalGrowth', Number(e.target.value))}
+                                    onChange={(val: number) => handleInputChange('capitalGrowth', val)}
                                 />
                                 <span className="text-sm text-gray-600 dark:text-gray-400">%</span>
                           </div>
