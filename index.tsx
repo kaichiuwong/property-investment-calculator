@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -31,7 +32,8 @@ import {
   HelpCircle,
   Clock,
   Hash,
-  RotateCcw
+  RotateCcw,
+  Printer
 } from 'lucide-react';
 import './index.css';
 import { SUBURB_DB_RAW } from './suburbs';
@@ -148,7 +150,7 @@ const getInitialState = (): CalculatorState => {
 // --- Components ---
 
 const InfoTooltip = ({ text }: { text: string }) => (
-  <div className="group relative inline-block ml-1">
+  <div className="group relative inline-block ml-1 print:hidden">
     <HelpCircle className="w-3 h-3 text-gray-400 cursor-help" />
     <div className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-xs rounded p-2 z-50 text-center shadow-lg pointer-events-none">
       {text}
@@ -183,15 +185,15 @@ const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { b
                 role="button"
                 aria-label="Show expense breakdown"
             >
-                <span className="text-sm text-gray-600 dark:text-gray-300 border-b border-dashed border-gray-400 dark:border-gray-500 group-hover:text-blue-500 transition-colors flex items-center gap-1">
-                    {label} <HelpCircle className="w-3 h-3 text-gray-400" />
+                <span className="text-sm text-gray-600 dark:text-gray-300 border-b border-dashed border-gray-400 dark:border-gray-500 group-hover:text-blue-500 transition-colors flex items-center gap-1 print:border-none">
+                    {label} <HelpCircle className="w-3 h-3 text-gray-400 print:hidden" />
                 </span>
                 <span className="text-sm font-medium text-red-600 dark:text-red-400">
                     -{fmt(totalExpenses)}
                 </span>
             </div>
             {isOpen && (
-                <div className="absolute left-0 bottom-full mb-2 w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-4 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 text-sm">
+                <div className="absolute left-0 bottom-full mb-2 w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-4 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 text-sm print:hidden">
                      <h4 className="font-semibold mb-3 pb-2 border-b border-gray-100 dark:border-gray-700 text-xs uppercase tracking-wide">Expense Breakdown</h4>
                      
                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
@@ -291,11 +293,11 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
 
   return (
     <div className="relative w-full">
-        {Icon && <Icon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none z-10" />}
+        {Icon && <Icon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none z-10 print:hidden" />}
         <input
             type="text" // Using text to allow commas
             inputMode="decimal" // Helps mobile keyboards
-            className={className}
+            className={`${className} print:border-none print:bg-transparent print:p-0 print:pl-0 print:text-right print:appearance-none`}
             value={inputValue}
             onChange={handleChange}
             onFocus={handleFocus}
@@ -391,7 +393,7 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
     // So we pass the strict max to input and range.
     
     return (
-        <div className="mb-4 last:mb-0">
+        <div className="mb-4 last:mb-0 print:mb-2">
             <div className="flex justify-between items-center mb-1">
                 <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center">
                     {label} <InfoTooltip text={infoText} />
@@ -399,7 +401,7 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
                 {isOverridden && onReset && (
                      <button 
                         onClick={onReset} 
-                        className="text-blue-500 hover:text-blue-600 flex items-center gap-1 ml-auto"
+                        className="text-blue-500 hover:text-blue-600 flex items-center gap-1 ml-auto print:hidden"
                         title="Reset to estimated value"
                     >
                         <Undo2 className="w-3 h-3" /> 
@@ -412,13 +414,13 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
                     type="range" 
                     min="0" 
                     max={max}
-                    className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden"
                     value={Math.min(value, max) || 0}
                     onChange={(e) => onChange(Number(e.target.value))}
                 />
-                <div className="w-24">
+                <div className="w-24 print:w-full">
                      <FormattedNumberInput
-                        className={`w-full px-2 py-1 text-right text-sm border rounded-md bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
+                        className={`w-full px-2 py-1 text-right text-sm border rounded-md bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0`}
                         value={value}
                         onChange={onChange}
                         max={max}
@@ -619,6 +621,10 @@ const App = () => {
       setShowPostcodeSuggestions(false);
       
       fetchRentEstimate(item.name, mappedState);
+  };
+
+  const handlePrint = () => {
+      window.print();
   };
 
   // Close suggestions on click outside
@@ -847,7 +853,7 @@ const App = () => {
   const ResetButton = ({ field }: { field: string }) => (
     <button 
         onClick={() => handleResetOverride(field)} 
-        className="text-blue-500 hover:text-blue-600 flex items-center gap-1 ml-auto"
+        className="text-blue-500 hover:text-blue-600 flex items-center gap-1 ml-auto print:hidden"
         title="Reset to estimated value"
     >
         <Undo2 className="w-3 h-3" /> 
@@ -860,16 +866,24 @@ const App = () => {
       <div className="max-w-7xl mx-auto space-y-6 flex-grow w-full">
         
         {/* Header */}
-        <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 print:mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-600 rounded-lg shadow-lg">
-              <Calculator className="w-6 h-6 text-white" />
+            <div className="p-3 bg-blue-600 rounded-lg shadow-lg print:p-2 print:bg-transparent print:shadow-none">
+              <Calculator className="w-6 h-6 text-white print:text-blue-600" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Property Calculator <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">(AUD)</span></h1>
             </div>
           </div>
-          <div className="flex items-center gap-3 self-end md:self-auto">
+          <div className="flex items-center gap-3 self-end md:self-auto print:hidden">
+             <button
+                onClick={handlePrint}
+                className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition-colors flex items-center gap-2"
+                title="Export as PDF"
+            >
+                <Printer className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                <span className="hidden md:inline text-sm font-medium text-gray-700 dark:text-gray-300">Export PDF</span>
+            </button>
              <button
                 onClick={handleFullReset}
                 className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition-colors"
@@ -896,13 +910,13 @@ const App = () => {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 print:block">
           
           {/* Inputs Column */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-6 print:grid print:grid-cols-2 print:gap-4 print:mb-6 print:space-y-0">
             
             {/* Property Details Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-gray-200 print:break-inside-avoid">
               <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white">
                 <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 Property Details
@@ -916,10 +930,10 @@ const App = () => {
                     <span>Suburb</span>
                   </label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                    <MapPin className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 print:hidden" />
                     <input 
                       type="text"
-                      className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
+                      className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors print:pl-0 print:border-none print:bg-transparent print:p-0"
                       placeholder="e.g. Richmond"
                       value={data.suburb}
                       onChange={handleSuburbChange}
@@ -929,7 +943,7 @@ const App = () => {
                   
                   {/* Autocomplete Dropdown */}
                   {showSuburbSuggestions && suburbSuggestions.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50 print:hidden">
                           {suburbSuggestions.map((suburb, idx) => (
                               <div 
                                 key={`${suburb.name}-${suburb.state}-${idx}`}
@@ -951,10 +965,10 @@ const App = () => {
                     <div ref={postcodeInputRef} className="relative">
                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Postcode</label>
                          <div className="relative">
-                            <Hash className="absolute left-3 top-2.5 w-3 h-3 text-gray-400" />
+                            <Hash className="absolute left-3 top-2.5 w-3 h-3 text-gray-400 print:hidden" />
                             <input 
                                 type="text"
-                                className="w-full pl-8 pr-2 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                                className="w-full pl-8 pr-2 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:pl-0 print:border-none print:bg-transparent print:p-0"
                                 placeholder="3121"
                                 value={data.postcode}
                                 onChange={handlePostcodeChange}
@@ -962,7 +976,7 @@ const App = () => {
                             />
                          </div>
                          {showPostcodeSuggestions && postcodeSuggestions.length > 0 && (
-                            <div className="absolute top-full left-0 w-64 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50">
+                            <div className="absolute top-full left-0 w-64 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50 print:hidden">
                                 {postcodeSuggestions.map((item, idx) => (
                                     <div 
                                         key={`${item.postcode}-${idx}`}
@@ -981,13 +995,13 @@ const App = () => {
                         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">State</label>
                         <div className="relative">
                             <select 
-                            className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                            className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:appearance-none"
                             value={data.state}
                             onChange={(e) => handleInputChange('state', e.target.value)}
                             >
                             {STATES.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
-                            <ChevronDown className="absolute right-2 top-3 w-3 h-3 text-gray-400 pointer-events-none" />
+                            <ChevronDown className="absolute right-2 top-3 w-3 h-3 text-gray-400 pointer-events-none print:hidden" />
                         </div>
                     </div>
                 </div>
@@ -997,7 +1011,7 @@ const App = () => {
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
                     <div className="relative">
                         <select 
-                        className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                        className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:appearance-none"
                         value={data.propertyType}
                         onChange={(e) => {
                             const newType = e.target.value as PropertyType;
@@ -1007,7 +1021,7 @@ const App = () => {
                         >
                         {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
-                        <ChevronDown className="absolute right-2 top-3 w-3 h-3 text-gray-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-2 top-3 w-3 h-3 text-gray-400 pointer-events-none print:hidden" />
                     </div>
                 </div>
 
@@ -1047,7 +1061,7 @@ const App = () => {
             </div>
 
             {/* Loan Card - MOVED HERE */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-gray-200 print:break-inside-avoid">
               <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white">
                 <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
                 Loan & Finance
@@ -1059,7 +1073,7 @@ const App = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">LVR (%)</label>
                     <input 
                       type="number"
-                      className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                      className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0"
                       value={data.lvr}
                       onChange={(e) => handleInputChange('lvr', Number(e.target.value))}
                       min={0}
@@ -1071,7 +1085,7 @@ const App = () => {
                     <input 
                       type="number"
                       step="0.01"
-                      className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
+                      className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0"
                       value={data.interestRate}
                       onChange={(e) => handleInputChange('interestRate', Number(e.target.value))}
                       min={0}
@@ -1086,11 +1100,11 @@ const App = () => {
                       type="range"
                       min="5"
                       max="30"
-                      className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden"
                       value={data.loanTerm}
                       onChange={(e) => handleInputChange('loanTerm', Number(e.target.value))}
                     />
-                    <div className="text-right text-sm text-gray-500 dark:text-gray-400 mt-1">{data.loanTerm} years</div>
+                    <div className="text-right text-sm text-gray-500 dark:text-gray-400 mt-1 print:text-left print:font-bold">{data.loanTerm} years</div>
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -1099,7 +1113,7 @@ const App = () => {
                     <button 
                       onClick={() => fetchRentEstimate()}
                       disabled={!data.suburb || rentEstimateLoading}
-                      className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50"
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50 print:hidden"
                     >
                       {rentEstimateLoading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                       Estimate
@@ -1111,11 +1125,11 @@ const App = () => {
                         min="0" 
                         max="10000" 
                         step="10"
-                        className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                        className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden"
                         value={data.weeklyRent || 0}
                         onChange={(e) => handleInputChange('weeklyRent', Number(e.target.value))}
                         />
-                        <div className="w-28 relative">
+                        <div className="w-28 relative print:w-full">
                            <FormattedNumberInput
                                 icon={DollarSign}
                                 className="w-full pl-8 pr-2 py-1.5 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
@@ -1132,7 +1146,7 @@ const App = () => {
             </div>
 
             {/* Expenses Breakdown Card - MOVED HERE */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-gray-200 print:break-inside-avoid print:col-span-2">
                  <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white">
                     <TrendingUp className="w-5 h-5 text-red-600 dark:text-red-400" />
                     Annual Expenses
@@ -1208,7 +1222,7 @@ const App = () => {
                         <div className="flex items-center gap-2">
                              <input 
                                 type="range" min="0" max="20"
-                                className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden"
                                 value={data.propertyManagerRate}
                                 onChange={(e) => handleInputChange('propertyManagerRate', Number(e.target.value))}
                             />
@@ -1225,26 +1239,26 @@ const App = () => {
           </div>
 
           {/* Results Column */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="lg:col-span-8 space-y-6 print:break-inside-avoid">
 
              {/* Time Travel Slider - Floating Card UI */}
-             <div className="sticky top-4 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-4 mb-6 mx-4 md:mx-0">
+             <div className="sticky top-4 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-4 mb-6 mx-4 md:mx-0 print:static print:shadow-none print:border-gray-200 print:mb-4 print:break-inside-avoid">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-600" />
                         Time Period: Year {viewYear}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Slide to view future</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 print:hidden">Slide to view future</span>
                   </div>
                   <input 
                     type="range"
                     min="0"
                     max="30"
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden"
                     value={viewYear}
                     onChange={(e) => setViewYear(Number(e.target.value))}
                   />
-                  <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
+                  <div className="flex justify-between text-xs text-gray-400 mt-1 px-1 print:hidden">
                     <span>Now</span>
                     <span>10 Years</span>
                     <span>20 Years</span>
@@ -1253,12 +1267,12 @@ const App = () => {
               </div>
             
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:break-inside-avoid">
               <div className={`rounded-xl p-5 shadow-sm border relative overflow-hidden transition-colors ${
                   weeklyCashFlow >= 0 
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
                   : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-              }`}>
+              } print:shadow-none print:border-gray-200`}>
                  <div className="flex justify-between items-start mb-2">
                     <span className={`text-sm font-medium ${weeklyCashFlow >= 0 ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>Weekly Net Cash Flow</span>
                  </div>
@@ -1270,7 +1284,7 @@ const App = () => {
                  </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+              <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors print:shadow-none print:border-gray-200">
                  <div className="flex justify-between items-start mb-2">
                     <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Rental Income (Year {viewYear})</span>
                     <TrendingUp className="w-4 h-4 text-gray-400" />
@@ -1285,7 +1299,7 @@ const App = () => {
                         <input 
                             type="number" 
                             step="0.1"
-                            className="w-12 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none"
+                            className="w-12 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none print:border-none print:bg-transparent print:p-0"
                             value={data.rentalGrowthRate}
                             onChange={(e) => handleInputChange('rentalGrowthRate', Number(e.target.value))}
                         />
@@ -1294,7 +1308,7 @@ const App = () => {
                  </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+              <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors print:shadow-none print:border-gray-200">
                  <div className="flex justify-between items-start mb-2">
                     <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Expenses (Year {viewYear})</span>
                     <DollarSign className="w-4 h-4 text-gray-400" />
@@ -1309,7 +1323,7 @@ const App = () => {
                         <input 
                             type="number" 
                             step="0.1"
-                            className="w-10 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none"
+                            className="w-10 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none print:border-none print:bg-transparent print:p-0"
                             value={data.inflationRate}
                             onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
                         />
@@ -1320,8 +1334,8 @@ const App = () => {
             </div>
 
             {/* Cash Flow Frequency Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                 <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-100 dark:border-slate-800">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:break-inside-avoid">
+                 <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-100 dark:border-slate-800 print:border-gray-200">
                     <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold mb-2">Weekly</div>
                     <div className="flex justify-between items-center mb-1">
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
@@ -1341,7 +1355,7 @@ const App = () => {
                     </div>
                  </div>
 
-                 <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-100 dark:border-slate-800">
+                 <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-100 dark:border-slate-800 print:border-gray-200">
                     <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold mb-2">Monthly</div>
                     <div className="flex justify-between items-center mb-1">
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
@@ -1361,7 +1375,7 @@ const App = () => {
                     </div>
                  </div>
 
-                 <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-100 dark:border-slate-800">
+                 <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-100 dark:border-slate-800 print:border-gray-200">
                     <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold mb-2">Yearly</div>
                     <div className="flex justify-between items-center mb-1">
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
@@ -1383,9 +1397,9 @@ const App = () => {
             </div>
 
             {/* Projection Chart */}
-            <div className="bg-slate-50 dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
-              <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-                  <div className="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-lg">
+            <div className="bg-slate-50 dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors print:shadow-none print:border-gray-200 print:break-inside-avoid">
+              <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 print:mb-2">
+                  <div className="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-lg print:hidden">
                       <button 
                         onClick={() => setChartMode('cashflow')}
                         className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${chartMode === 'cashflow' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
@@ -1399,6 +1413,9 @@ const App = () => {
                         Wealth Projection
                       </button>
                   </div>
+                  <div className="hidden print:block text-lg font-bold mb-2">
+                      {chartMode === 'cashflow' ? 'Cash Flow Projection' : 'Wealth Projection'}
+                  </div>
 
                   {chartMode === 'wealth' && (
                        <div className="flex items-center gap-2">
@@ -1407,7 +1424,7 @@ const App = () => {
                                 <input 
                                     type="number"
                                     step="0.1"
-                                    className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                    className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white print:border-none print:bg-transparent print:p-0"
                                     value={data.capitalGrowth}
                                     onChange={(e) => handleInputChange('capitalGrowth', Number(e.target.value))}
                                 />
@@ -1417,12 +1434,13 @@ const App = () => {
                   )}
               </div>
 
-              <div className="h-[350px] w-full">
+              <div className="h-[350px] w-full print:h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   {chartMode === 'wealth' ? (
                       <ComposedChart 
                         data={projections}
                         margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                        onTouchMove={() => {}} // Add empty handler to fix TypeScript error if types are strict, actual logic in Tooltip
                       >
                         <defs>
                           <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -1460,6 +1478,7 @@ const App = () => {
                       <LineChart 
                         data={projections}
                         margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                        onTouchMove={() => {}}
                       >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#374151" : "#e5e7eb"} />
                         <XAxis 
@@ -1490,16 +1509,16 @@ const App = () => {
 
             {/* AI Analysis Section */}
             {aiAnalysis && (
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-slate-800 rounded-xl p-6 border border-purple-100 dark:border-gray-700 transition-colors">
-                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-purple-900 dark:text-purple-300">
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-slate-800 rounded-xl p-6 border border-purple-100 dark:border-gray-700 transition-colors print:shadow-none print:border-gray-200 print:bg-white print:break-inside-avoid">
+                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2 text-purple-900 dark:text-purple-300 print:text-purple-900">
                     <Sparkles className="w-5 h-5" />
                     AI Investment Analysis
                 </h2>
-                <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 print:text-black">
                     <ReactMarkdown
                         components={{
                             p: ({node, ...props}) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
-                            strong: ({node, ...props}) => <span className="font-semibold text-purple-700 dark:text-purple-400" {...props} />,
+                            strong: ({node, ...props}) => <span className="font-semibold text-purple-700 dark:text-purple-400 print:text-purple-800" {...props} />,
                             ul: ({node, ...props}) => <ul className="list-disc pl-4 space-y-1 mb-2" {...props} />,
                             li: ({node, ...props}) => <li className="" {...props} />
                         }}
@@ -1513,8 +1532,8 @@ const App = () => {
         </div>
         
         {/* Footer with Disclaimer & Copyright */}
-        <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+        <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800 print:mt-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400 print:text-gray-600">
                  <div className="max-w-4xl text-center md:text-left">
                     <p>
                         Disclaimer: This calculator is for educational and estimation purposes only. It does not constitute financial advice. 
