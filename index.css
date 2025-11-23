@@ -11,7 +11,7 @@ body {
 @media print {
   @page {
     size: A4;
-    margin: 15mm;
+    margin: 10mm;
   }
 
   body {
@@ -19,6 +19,7 @@ body {
     color: black !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    font-size: 12px;
   }
 
   /* Force Light Mode overrides */
@@ -75,5 +76,11 @@ body {
   /* Layout Adjustments */
   .sticky {
     position: static !important;
+  }
+
+  /* Chart resizing for print */
+  .recharts-responsive-container {
+    height: 400px !important;
+    width: 100% !important;
   }
 }
