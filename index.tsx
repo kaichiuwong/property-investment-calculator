@@ -827,10 +827,6 @@ const App = () => {
   const weeklyCashFlow = currentStats.netCashFlow / 52;
   const currentGrossYield = currentStats.value > 0 ? (currentStats.rentalIncome / currentStats.value) * 100 : 0;
 
-  // Calculate Building Value for max limits
-  // NOTE: User requested max to be 100% of Purchase Price, so we use data.price for caps instead of buildingValue.
-  const buildingValue = Math.max(0, data.price - data.landValue);
-
   const fetchAiAnalysis = async () => {
     if (!process.env.API_KEY) return alert("API Key missing.");
     setAiLoading(true);
@@ -1252,11 +1248,11 @@ const App = () => {
           {/* Results Column */}
           <div className="lg:col-span-8 space-y-6">
 
-             {/* Time Travel Slider - Sticky on Mobile / Always on Top */}
-             <div className="sticky top-0 z-40 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-sm py-4 border-b border-gray-200 dark:border-gray-700 rounded-b-xl shadow-sm mb-4 -mx-4 px-4 md:mx-0 md:px-0 md:bg-transparent md:border-0 md:py-0 md:shadow-none md:mb-6">
+             {/* Time Travel Slider - Floating Card UI */}
+             <div className="sticky top-4 z-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-xl p-4 mb-6 mx-4 md:mx-0">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
+                        <Clock className="w-4 h-4 text-blue-600" />
                         Time Period: Year {viewYear}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">Slide to view future</span>
@@ -1265,7 +1261,7 @@ const App = () => {
                     type="range"
                     min="0"
                     max="30"
-                    className="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
                     value={viewYear}
                     onChange={(e) => setViewYear(Number(e.target.value))}
                   />
@@ -1453,6 +1449,11 @@ const App = () => {
                                 setViewYear(Number(e.activeLabel));
                             }
                         }}
+                        onTouchMove={(e: any) => {
+                             if (e.activeLabel !== undefined) {
+                                setViewYear(Number(e.activeLabel));
+                            }
+                        }}
                       >
                         <defs>
                           <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -1488,6 +1489,11 @@ const App = () => {
                         margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                          onMouseMove={(e: any) => {
                             if (e.activeLabel !== undefined) {
+                                setViewYear(Number(e.activeLabel));
+                            }
+                        }}
+                        onTouchMove={(e: any) => {
+                             if (e.activeLabel !== undefined) {
                                 setViewYear(Number(e.activeLabel));
                             }
                         }}
