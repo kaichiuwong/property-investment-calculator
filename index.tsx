@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
+import ReactMarkdown from 'react-markdown';
 import {
   LineChart,
   Line,
@@ -131,11 +132,11 @@ const ESTIMATED_LAND_VALUE_RATIO: Record<PropertyType, number> = {
 };
 
 const ESTIMATED_GROWTH_RATE: Record<PropertyType, number> = {
-  'House': 6.00,
-  'Townhouse': 4.60,
-  'Apartment': 2.00,
-  'Home & Land': 4.50,
-  'Old Home': 6.00
+  'House': 4.00,
+  'Townhouse': 3.00,
+  'Apartment': 1.00,
+  'Home & Land': 3.50,
+  'Old Home': 4.00
 };
 
 // --- Helper Functions ---
@@ -182,7 +183,7 @@ const getInitialState = (): CalculatorState => {
         lvr: 80,
         suburb: 'Richmond',
         weeklyRent: 650,
-        capitalGrowth: 6.0,
+        capitalGrowth: ESTIMATED_GROWTH_RATE[propertyType], // Default from updated map
         inflationRate: 2.8,
         rentalGrowthRate: 5.5,
         
@@ -369,7 +370,7 @@ const App = () => {
 
   // Time Travel State
   const [viewYear, setViewYear] = useState(0);
-  const [chartMode, setChartMode] = useState<'wealth' | 'cashflow'>('wealth');
+  const [chartMode, setChartMode] = useState<'wealth' | 'cashflow'>('cashflow');
 
   // --- API ---
 
@@ -436,6 +437,7 @@ const App = () => {
       setOverrides({});
       setAiAnalysis(null);
       setViewYear(0);
+      setChartMode('cashflow');
       // Clear suggestions state
       setSuburbSuggestions([]);
       setPostcodeSuggestions([]);
@@ -545,7 +547,7 @@ const App = () => {
   useEffect(() => {
     if (overrides.capitalGrowth) return;
 
-    const growthRate = ESTIMATED_GROWTH_RATE[data.propertyType] || 6.0;
+    const growthRate = ESTIMATED_GROWTH_RATE[data.propertyType] || 4.0;
     
     setData(prev => ({
       ...prev,
@@ -742,8 +744,8 @@ const App = () => {
   );
 
   return (
-    <div className={`min-h-screen p-4 md:p-8 transition-colors duration-200 text-gray-800 dark:text-gray-100`}>
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className={`min-h-screen p-4 md:p-8 transition-colors duration-200 text-gray-800 dark:text-gray-100 flex flex-col`}>
+      <div className="max-w-7xl mx-auto space-y-6 flex-grow w-full">
         
         {/* Header */}
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
@@ -1332,8 +1334,18 @@ const App = () => {
                           <div className="h-4 bg-indigo-200/50 dark:bg-indigo-700/50 rounded w-5/6"></div>
                         </div>
                       ) : (
-                        <div className="prose prose-sm text-indigo-800 dark:text-indigo-200 leading-relaxed whitespace-pre-line">
-                           {aiAnalysis}
+                        <div className="text-indigo-800 dark:text-indigo-200 leading-relaxed text-sm">
+                           <ReactMarkdown
+                              components={{
+                                ul: ({node, ...props}) => <ul className="list-disc pl-5 space-y-1 mb-2" {...props} />,
+                                ol: ({node, ...props}) => <ol className="list-decimal pl-5 space-y-1 mb-2" {...props} />,
+                                li: ({node, ...props}) => <li className="pl-1" {...props} />,
+                                strong: ({node, ...props}) => <span className="font-bold text-indigo-900 dark:text-indigo-50" {...props} />,
+                                p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />
+                              }}
+                           >
+                            {aiAnalysis || ''}
+                           </ReactMarkdown>
                         </div>
                       )}
                    </div>
@@ -1360,23 +1372,33 @@ const App = () => {
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-4 text-xs">
-                        <div className="flex items-center gap-2 bg-white dark:bg-gray-700 px-3 py-1 rounded-full border dark:border-gray-600">
-                            <span className="text-gray-500 dark:text-gray-300">Capital Growth:</span>
-                            <input 
-                                type="number" 
-                                className="w-10 bg-transparent font-medium text-right outline-none text-base md:text-sm border-b border-gray-300 dark:border-gray-500 focus:border-blue-500 text-gray-900 dark:text-white"
-                                value={data.capitalGrowth}
-                                onChange={(e) => handleInputChange('capitalGrowth', Number(e.target.value))}
-                            />
-                            <span className="text-gray-500 dark:text-gray-300">%</span>
-                        </div>
+                        {chartMode === 'wealth' && (
+                            <div className="flex items-center gap-2 bg-white dark:bg-gray-700 px-3 py-1 rounded-full border dark:border-gray-600">
+                                <span className="text-gray-500 dark:text-gray-300">Property Value Growth:</span>
+                                <input 
+                                    type="number" 
+                                    className="w-10 bg-transparent font-medium text-right outline-none text-base md:text-sm border-b border-gray-300 dark:border-gray-500 focus:border-blue-500 text-gray-900 dark:text-white"
+                                    value={data.capitalGrowth}
+                                    onChange={(e) => handleInputChange('capitalGrowth', Number(e.target.value))}
+                                />
+                                <span className="text-gray-500 dark:text-gray-300">%</span>
+                            </div>
+                        )}
                     </div>
                 </div>
                 
                 <div className="h-[350px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         {chartMode === 'wealth' ? (
-                            <AreaChart data={projections} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <AreaChart 
+                                data={projections} 
+                                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                                onMouseMove={(e: any) => {
+                                    if (e && e.activeLabel !== undefined) {
+                                        setViewYear(Number(e.activeLabel));
+                                    }
+                                }}
+                            >
                                 <defs>
                                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
@@ -1396,9 +1418,29 @@ const App = () => {
                                 <Line type="monotone" dataKey="loan" name="Loan Balance" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                                 {/* Current Year Indicator Line */}
                                 {viewYear > 0 && <ReferenceLine x={viewYear} stroke="#f59e0b" strokeDasharray="3 3" label={{ position: 'top', value: `Year ${viewYear}`, fill: '#f59e0b', fontSize: 10 }} />}
+                                {/* Purchase Price Reference Line */}
+                                <ReferenceLine 
+                                    y={data.price} 
+                                    stroke={darkMode ? "#9ca3af" : "#6b7280"} 
+                                    strokeDasharray="3 3" 
+                                    label={{ 
+                                        position: 'insideBottomRight', 
+                                        value: 'Purchase Price', 
+                                        fill: darkMode ? '#9ca3af' : '#6b7280', 
+                                        fontSize: 12 
+                                    }} 
+                                />
                             </AreaChart>
                         ) : (
-                            <LineChart data={projections} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <LineChart 
+                                data={projections} 
+                                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                                onMouseMove={(e: any) => {
+                                    if (e && e.activeLabel !== undefined) {
+                                        setViewYear(Number(e.activeLabel));
+                                    }
+                                }}
+                            >
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#374151" : "#e2e8f0"} />
                                 <XAxis dataKey="year" tick={{fontSize: 12, fill: '#9ca3af'}} tickLine={false} axisLine={false} interval={4} />
                                 <YAxis tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`} tick={{fontSize: 12, fill: '#9ca3af'}} tickLine={false} axisLine={false} />
@@ -1432,6 +1474,16 @@ const App = () => {
 
           </div>
         </div>
+
+        {/* Footer Disclaimer */}
+        <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+                Disclaimer: This calculator provides estimates only and should not be used as financial advice. 
+                Calculations are based on the assumptions provided and may not reflect actual market conditions. 
+                Please refer to actual sales reports, official statistical data, and consult with a qualified financial advisor before making investment decisions.
+            </p>
+        </footer>
+
       </div>
     </div>
   );
