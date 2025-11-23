@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -72,7 +73,6 @@ interface SuburbItem {
   postcode: string;
 }
 
-// Fix: Use commas instead of pipes for array elements
 const PROPERTY_TYPES: PropertyType[] = ['House', 'Townhouse', 'Apartment', 'Home & Land', 'Old Home'];
 const STATES: AustralianState[] = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'];
 
@@ -96,43 +96,32 @@ const ESTIMATED_GROWTH_RATE: Record<PropertyType, number> = {
 
 const calculateLandTax = (landValue: number, state: AustralianState): number => {
   if (state === 'VIC') {
-    // Simplified VIC 2024 Investment Land Tax scales
     if (landValue < 50000) return 0;
-    if (landValue < 250000) return 0 + (landValue - 50000) * 0.002; // $0 + 0.2%
-    if (landValue < 600000) return 400 + (landValue - 250000) * 0.005; // $400 + 0.5%
-    if (landValue < 1000000) return 2150 + (landValue - 600000) * 0.008; // $2150 + 0.8%
-    if (landValue < 1800000) return 5350 + (landValue - 1000000) * 0.013; // $5350 + 1.3%
-    if (landValue < 3000000) return 15750 + (landValue - 1800000) * 0.018; // $15750 + 1.8%
-    return 37350 + (landValue - 3000000) * 0.02; // >3m
+    if (landValue < 250000) return 0 + (landValue - 50000) * 0.002;
+    if (landValue < 600000) return 400 + (landValue - 250000) * 0.005;
+    if (landValue < 1000000) return 2150 + (landValue - 600000) * 0.008;
+    if (landValue < 1800000) return 5350 + (landValue - 1000000) * 0.013;
+    if (landValue < 3000000) return 15750 + (landValue - 1800000) * 0.018;
+    return 37350 + (landValue - 3000000) * 0.02;
   }
   
   if (state === 'NSW') {
-    // NSW 2024 Land Tax Thresholds
     const threshold = 1075000;
     const premiumThreshold = 6571000;
-
     if (landValue < threshold) return 0;
-    
-    if (landValue < premiumThreshold) {
-        return 100 + (landValue - threshold) * 0.016;
-    }
-    
+    if (landValue < premiumThreshold) return 100 + (landValue - threshold) * 0.016;
     return 88036 + (landValue - premiumThreshold) * 0.02;
   }
 
   if (state === 'QLD') {
-    // QLD 2024-2025 Land Tax Rates for Individuals
-    // Source: https://qro.qld.gov.au/land-tax/calculate/individual/
     if (landValue < 600000) return 0;
-    if (landValue < 1000000) return 500 + (landValue - 600000) * 0.01; // $500 + 1.0c for each $1 > $600k
-    if (landValue < 3000000) return 4500 + (landValue - 1000000) * 0.0165; // $4,500 + 1.65c for each $1 > $1m
-    if (landValue < 5000000) return 37500 + (landValue - 3000000) * 0.0125; // $37,500 + 1.25c for each $1 > $3m
-    return 62500 + (landValue - 5000000) * 0.0175; // $62,500 + 1.75c for each $1 > $5m
+    if (landValue < 1000000) return 500 + (landValue - 600000) * 0.01;
+    if (landValue < 3000000) return 4500 + (landValue - 1000000) * 0.0165;
+    if (landValue < 5000000) return 37500 + (landValue - 3000000) * 0.0125;
+    return 62500 + (landValue - 5000000) * 0.0175;
   }
 
   if (state === 'SA') {
-    // SA 2024-2025 Land Tax Rates (General)
-    // Source: https://www.revenuesa.sa.gov.au/landtax/rates-and-thresholds
     if (landValue <= 534000) return 0;
     if (landValue <= 801000) return (landValue - 534000) * 0.005; 
     if (landValue <= 1133000) return 1335 + (landValue - 801000) * 0.01;
@@ -141,8 +130,6 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
   }
 
   if (state === 'TAS') {
-    // TAS 2024-2025 General Land Tax Rates
-    // Source: https://www.sro.tas.gov.au/land-tax/rates-of-land-tax
     if (landValue < 50000) return 0;
     if (landValue < 100000) return (landValue - 50000) * 0.0055;
     if (landValue < 250000) return 275 + (landValue - 100000) * 0.0055;
@@ -151,8 +138,6 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
   }
 
   if (state === 'WA') {
-    // WA 2024-2025 Land Tax Rates
-    // Source: https://www.wa.gov.au/organisation/department-of-treasury-and-finance/land-tax-assessment
     if (landValue <= 300000) return 0;
     if (landValue <= 420000) return 300;
     if (landValue <= 1000000) return 300 + (landValue - 420000) * 0.0025;
@@ -163,24 +148,14 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
   }
 
   if (state === 'ACT') {
-    // ACT 2024-2025 Land Tax Rates (Residential)
-    // Source: https://www.revenue.act.gov.au/land-tax
-    // Fixed Charge: $1,665
-    // Valuation Charge (Annualised rates based on quarterly figures):
-    // 0 - $150,000: 0.54%
-    // $150,001 - $275,000: 0.64%
-    // $275,001+: 1.18%
-    
     const fixedCharge = 1665;
     let valuationCharge = 0;
     
     if (landValue <= 150000) {
         valuationCharge = landValue * 0.0054;
     } else if (landValue <= 275000) {
-        // First 150k is 0.54% ($810)
         valuationCharge = 810 + (landValue - 150000) * 0.0064;
     } else {
-        // First 150k @ 0.54% ($810) + Next 125k @ 0.64% ($800) = $1610
         valuationCharge = 1610 + (landValue - 275000) * 0.0118;
     }
     
@@ -190,7 +165,6 @@ const calculateLandTax = (landValue: number, state: AustralianState): number => 
   return 0;
 };
 
-// Helper to generate fresh default state with correct calculations
 const getInitialState = (): CalculatorState => {
     const price = 850000;
     const propertyType: PropertyType = 'House';
@@ -209,11 +183,9 @@ const getInitialState = (): CalculatorState => {
         lvr: 80,
         suburb: 'Richmond',
         weeklyRent: 650,
-        capitalGrowth: ESTIMATED_GROWTH_RATE[propertyType], // Default from updated map
+        capitalGrowth: ESTIMATED_GROWTH_RATE[propertyType],
         inflationRate: 2.8,
         rentalGrowthRate: 5.5,
-        
-        // Pre-calculate default expenses so resetting works correctly even if effects don't trigger
         landValue,
         councilRates: Math.round(price * 0.0042),
         insurance: Math.round(price * 0.003),
@@ -237,7 +209,6 @@ const InfoTooltip = ({ text }: { text: string }) => (
   </div>
 );
 
-// New component for Expenses Breakdown
 const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { breakdown: any, totalExpenses: number, divisor: number, label: string }) => {
     const [isOpen, setIsOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -252,7 +223,6 @@ const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { b
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Helper for formatting
     const fmt = (val: number) => `$${Math.round(val / divisor).toLocaleString()}`;
 
     return (
@@ -273,7 +243,6 @@ const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { b
             {isOpen && (
                 <div className="absolute left-0 bottom-full mb-2 w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-4 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 text-sm print:hidden">
                      <h4 className="font-semibold mb-3 pb-2 border-b border-gray-100 dark:border-gray-700 text-xs uppercase tracking-wide">Expense Breakdown</h4>
-                     
                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
                         <div className="flex justify-between font-medium text-red-600 dark:text-red-400">
                             <span>Mortgage</span>
@@ -287,7 +256,6 @@ const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { b
                         {breakdown.water > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Water</span><span>{fmt(breakdown.water)}</span></div>}
                         {breakdown.maintenance > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Maintenance</span><span>{fmt(breakdown.maintenance)}</span></div>}
                      </div>
-
                      <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700 flex justify-between font-bold text-gray-900 dark:text-white">
                         <span>Total</span>
                         <span>{fmt(totalExpenses)}</span>
@@ -299,26 +267,18 @@ const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { b
     );
 };
 
-// Formatted Number Input Component
-// Displays comma-separated values (e.g. 850,000) when not focused,
-// and reverts to standard number input when editing for better UX/Mobile support.
-// Also supports step via arrow keys.
 const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholder, icon: Icon, min, max, ...props }: any) => {
-  // We keep internal string state to allow "unformatted" editing
   const [inputValue, setInputValue] = useState<string>("");
   const [isFocused, setIsFocused] = useState(false);
 
-  // Sync internal state with external prop when not focused (or on mount)
   useEffect(() => {
     if (!isFocused) {
-       // Fix: Check strictly for undefined/null so 0 is rendered as "0"
        setInputValue((value !== undefined && value !== null) ? Number(value).toLocaleString() : "");
     }
   }, [value, isFocused]);
 
   const handleFocus = () => {
     setIsFocused(true);
-    // Change: If value is 0, set input to empty string for easier typing
     if (value === 0) {
         setInputValue("");
     } else {
@@ -328,8 +288,6 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
 
   const handleBlur = () => {
     setIsFocused(false);
-    // Formatting happens in useEffect due to dependency on isFocused
-    // Validation on Blur
     let val = Number(inputValue.replace(/,/g, ''));
     let newVal = val;
     if (min !== undefined && val < min) newVal = min;
@@ -337,9 +295,8 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
     
     if (newVal !== val) {
         onChange(newVal);
-        setInputValue(newVal.toString()); // Update visual immediately
+        setInputValue(newVal.toString());
     } else if (inputValue === "") {
-        // If empty on blur, revert to 0 if min allows, or existing value logic
         setInputValue("0");
         onChange(0);
     }
@@ -349,14 +306,12 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
     const raw = e.target.value.replace(/,/g, '');
     if (raw === '') {
          setInputValue('');
-         onChange(0);
+         onChange(0); // Ensure parent state updates to 0 immediately for live calculations
          return;
     }
 
     if (!isNaN(Number(raw))) {
-        // Prevent negative inputs immediately during typing
         if (Number(raw) < 0) return;
-
         setInputValue(e.target.value);
         onChange(Number(raw));
     }
@@ -372,7 +327,6 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
           if (min !== undefined) next = Math.max(min, next);
           if (max !== undefined) next = Math.min(max, next);
           
-          // Fix floating point precision issues
           next = Math.round(next * 100) / 100;
           
           setInputValue(next.toString());
@@ -384,8 +338,8 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
     <div className="relative w-full">
         {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10 print:hidden" />}
         <input
-            type="text" // Using text to allow commas
-            inputMode="decimal" // Helps mobile keyboards
+            type="text"
+            inputMode="decimal"
             className={`${className} print:border-none print:bg-transparent print:p-0 print:pl-0 print:text-right print:appearance-none print:w-full print:h-auto`}
             value={inputValue}
             onChange={handleChange}
@@ -409,11 +363,9 @@ interface CustomGraphTooltipProps {
 }
 
 const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYear, isMobile }: CustomGraphTooltipProps) => {
-  // Sync slider with chart hover
   useEffect(() => {
     if (active && label !== undefined && setViewYear) {
         const year = Number(label);
-        // Only update if it's different to prevent potential cycles, though state update batching usually handles this
         if (year !== currentViewYear) {
             setViewYear(year);
         }
@@ -424,20 +376,16 @@ const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYe
     const data = payload[0].payload;
     
     if (isMobile) {
-        // Compact Mobile Tooltip
+        // Ultra-compact mobile tooltip, fixed position via parent logic often needed, but here we use simple styling
         return (
-            <div className="bg-white/95 dark:bg-gray-800/95 border border-gray-100 dark:border-gray-700 rounded-md shadow-lg p-2 text-[10px] leading-tight backdrop-blur-sm">
-                <p className="font-bold text-gray-900 dark:text-white mb-1 border-b border-gray-100 dark:border-gray-700 pb-1">Year {label}</p>
-                <div className="grid grid-cols-1 gap-y-0.5">
-                    {payload.map((entry: any, index: number) => (
-                        <div key={index} className="flex justify-between gap-3">
-                            <span className="text-gray-500 dark:text-gray-400 truncate">{entry.name}</span>
-                            <span className={`font-mono font-medium text-right ${entry.name === 'Net Cash Flow' ? (entry.value >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-900 dark:text-white'}`}>
-                                {entry.name === 'Net Cash Flow' && entry.value > 0 ? '+' : ''}${Number(entry.value).toLocaleString()}
-                            </span>
-                        </div>
-                    ))}
-                </div>
+            <div className="bg-white/95 dark:bg-gray-800/95 border border-gray-200 dark:border-gray-700 rounded shadow-sm px-2 py-1 text-[10px] flex items-center gap-2 whitespace-nowrap">
+                <span className="font-bold text-gray-900 dark:text-white">Yr {label}</span>
+                {payload.map((entry: any, index: number) => (
+                    <span key={index} className={`${entry.name === 'Net Cash Flow' ? (entry.value >= 0 ? 'text-green-600' : 'text-red-600') : 'text-gray-600 dark:text-gray-300'}`}>
+                        {entry.name === 'Net Cash Flow' ? 'Net: ' : ''}
+                        ${Math.round(entry.value/1000)}k
+                    </span>
+                ))}
             </div>
         );
     }
@@ -452,7 +400,6 @@ const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYe
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                {/* Handle line vs area legend icon */}
                 {entry.type === undefined ? (
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
                 ) : (
@@ -467,8 +414,6 @@ const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYe
             </div>
           ))}
         </div>
-        
-        {/* Extra Context for Cash Flow Chart */}
         {data.breakdown && payload.some((p: any) => p.dataKey === 'netCashFlow') && (
            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
               <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -487,7 +432,6 @@ const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYe
   return null;
 };
 
-// Helper component for Expense Sliders
 interface ExpenseSliderRowProps {
     label: string;
     infoText: string;
@@ -496,9 +440,10 @@ interface ExpenseSliderRowProps {
     isOverridden?: boolean;
     onReset?: () => void;
     max: number;
+    icon?: any;
 }
 
-const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onReset, max }: ExpenseSliderRowProps) => {
+const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onReset, max, icon: Icon }: ExpenseSliderRowProps) => {
     return (
         <div className="mb-4 last:mb-0 print:mb-2 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
             <div className="flex justify-between items-center mb-1 print:mb-0">
@@ -525,14 +470,14 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
                     value={Math.min(value, max) || 0}
                     onChange={(e) => onChange(Number(e.target.value))}
                 />
-                <div className="w-40 print:w-auto">
+                <div className="w-32 print:w-auto">
                      <FormattedNumberInput
                         className={`w-full pl-9 pr-3 py-2 text-right text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono`}
                         value={value}
                         onChange={onChange}
                         max={max}
                         min={0}
-                        icon={DollarSign}
+                        icon={Icon}
                     />
                 </div>
             </div>
@@ -541,7 +486,7 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
 }
 
 const App = () => {
-  // Theme state
+  // ... (State definitions remain unchanged) ...
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -549,7 +494,6 @@ const App = () => {
     return false;
   });
 
-  // Mobile state detection
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -559,7 +503,6 @@ const App = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Print state
   const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
@@ -570,7 +513,6 @@ const App = () => {
     }
   }, [darkMode]);
 
-  // Listen for print events to render both charts
   useEffect(() => {
     const handleBeforePrint = () => setIsPrinting(true);
     const handleAfterPrint = () => setIsPrinting(false);
@@ -584,55 +526,40 @@ const App = () => {
     };
   }, []);
 
-  // Initial State
   const [data, setData] = useState<CalculatorState>(getInitialState);
-
-  // Track manual overrides for calculated fields
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
-
   const [aiLoading, setAiLoading] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [rentEstimateLoading, setRentEstimateLoading] = useState(false);
-
-  // Suburb Data State
   const [allSuburbs, setAllSuburbs] = useState<SuburbItem[]>([]);
   
-  // Initialize Suburbs from Hardcoded List
   useEffect(() => {
       const parsed = SUBURB_DB_RAW.map(entry => {
           const [name, state, rawPcode] = entry.split('|');
-          // Ensure postcode is 4 digits (pad with leading zeros)
           const postcode = rawPcode.padStart(4, '0');
           return { name, state, postcode };
       });
       setAllSuburbs(parsed);
   }, []);
 
-  // Autocomplete State for Suburb
   const [suburbSuggestions, setSuburbSuggestions] = useState<SuburbItem[]>([]);
   const [showSuburbSuggestions, setShowSuburbSuggestions] = useState(false);
   const suburbInputRef = useRef<HTMLDivElement>(null);
-
-  // Autocomplete State for Postcode
   const [postcodeSuggestions, setPostcodeSuggestions] = useState<SuburbItem[]>([]);
   const [showPostcodeSuggestions, setShowPostcodeSuggestions] = useState(false);
   const postcodeInputRef = useRef<HTMLDivElement>(null);
-
-  // Time Travel State
   const [viewYear, setViewYear] = useState(0);
   const [chartMode, setChartMode] = useState<'wealth' | 'cashflow'>('cashflow');
 
-  // --- API ---
-
+  // ... (API logic fetchRentEstimate unchanged) ...
   const fetchRentEstimate = async (suburbOverride?: string, stateOverride?: string, typeOverride?: PropertyType) => {
     const suburbToUse = suburbOverride || data.suburb;
     const stateToUse = stateOverride || data.state;
     const typeToUse = typeOverride || data.propertyType;
 
-    if (!suburbToUse) return; // Silent return
-    if (!process.env.API_KEY) return; // Silent return if no key
+    if (!suburbToUse) return;
+    if (!process.env.API_KEY) return;
 
-    // Map 'Old Home' and 'Home & Land' to 'House' for better AI estimation
     let searchType = typeToUse;
     if (typeToUse === 'Old Home' || typeToUse === 'Home & Land') {
         searchType = 'House';
@@ -671,14 +598,10 @@ const App = () => {
     }
   };
 
-  // --- Handlers ---
-
   const handleInputChange = (field: keyof CalculatorState, value: any) => {
-    // If user manually changes a calculated field, mark it as overridden
     if (['landValue', 'councilRates', 'insurance', 'bodyCorp', 'landTax', 'capitalGrowth'].includes(field)) {
         setOverrides(prev => ({ ...prev, [field]: true }));
     }
-    // Prevent negative numbers on basic change handler
     if (typeof value === 'number') {
         value = Math.max(0, value);
     }
@@ -686,13 +609,11 @@ const App = () => {
   };
 
   const handleFullReset = () => {
-      // Reset to fresh state (with re-calculated defaults) immediately
       setData(getInitialState());
       setOverrides({});
       setAiAnalysis(null);
       setViewYear(0);
       setChartMode('cashflow');
-      // Clear suggestions state
       setSuburbSuggestions([]);
       setPostcodeSuggestions([]);
       setShowSuburbSuggestions(false);
@@ -704,10 +625,9 @@ const App = () => {
       handleInputChange('suburb', val);
       
       if (val.length > 0) {
-          // Strict "starts with" filtering
           const filtered = allSuburbs.filter(s => 
               s.name.toLowerCase().startsWith(val.toLowerCase())
-          ).slice(0, 10); // Limit results
+          ).slice(0, 10);
           
           setSuburbSuggestions(filtered);
           setShowSuburbSuggestions(true);
@@ -719,7 +639,6 @@ const App = () => {
 
   const handleSuburbSelect = (suburb: SuburbItem) => {
       handleInputChange('suburb', suburb.name);
-      // Ensure state is valid valid AustralianState, otherwise default or keep simple string if strictly needed
       const mappedState = STATES.includes(suburb.state as AustralianState) ? (suburb.state as AustralianState) : data.state;
       handleInputChange('state', mappedState);
       
@@ -727,8 +646,6 @@ const App = () => {
           handleInputChange('postcode', suburb.postcode);
       }
       setShowSuburbSuggestions(false);
-      
-      // Auto-trigger rent estimate with the new values
       fetchRentEstimate(suburb.name, mappedState);
   };
 
@@ -751,25 +668,20 @@ const App = () => {
   const handlePostcodeSelect = (item: SuburbItem) => {
       handleInputChange('postcode', item.postcode);
       handleInputChange('suburb', item.name);
-      
       const mappedState = STATES.includes(item.state as AustralianState) ? (item.state as AustralianState) : data.state;
       handleInputChange('state', mappedState);
-      
       setShowPostcodeSuggestions(false);
-      
       fetchRentEstimate(item.name, mappedState);
   };
 
   const handlePrint = () => {
       setIsPrinting(true);
-      // Delay printing slightly to allow React to render the second chart (which is usually hidden)
       setTimeout(() => {
           window.print();
           setIsPrinting(false);
       }, 500);
   };
 
-  // Close suggestions on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
         if (suburbInputRef.current && !suburbInputRef.current.contains(event.target as Node)) {
@@ -791,70 +703,33 @@ const App = () => {
     });
   };
 
-  // --- Auto-Calculation Logic ---
-
-  // Update Land Value Estimate based on Property Type & Price
   useEffect(() => {
     if (overrides.landValue) return;
-
     const ratio = ESTIMATED_LAND_VALUE_RATIO[data.propertyType] || 0.45;
     const estimatedLand = Math.round(data.price * ratio);
-    
-    setData(prev => ({
-      ...prev,
-      landValue: estimatedLand
-    }));
+    setData(prev => ({ ...prev, landValue: estimatedLand }));
   }, [data.price, data.propertyType, overrides.landValue]);
 
-  // Update Capital Growth based on Property Type
   useEffect(() => {
     if (overrides.capitalGrowth) return;
-
     const growthRate = ESTIMATED_GROWTH_RATE[data.propertyType] || 4.0;
-    
-    setData(prev => ({
-      ...prev,
-      capitalGrowth: growthRate
-    }));
+    setData(prev => ({ ...prev, capitalGrowth: growthRate }));
   }, [data.propertyType, overrides.capitalGrowth]);
 
-  // Update Expenses based on Price/Rent/LandValue
   useEffect(() => {
     setData(prev => {
         const updates: Partial<CalculatorState> = {};
-        
-        // Council Rates: Price * 0.0042
-        if (!overrides.councilRates) {
-            updates.councilRates = Math.round(prev.price * 0.0042);
-        }
-        
-        // Insurance: 0.3% of Price
-        if (!overrides.insurance) {
-            updates.insurance = Math.round(prev.price * 0.003);
-        }
-        
-        // Body Corp: 1% for Strata (Apt/Townhouse), 0 for others
+        if (!overrides.councilRates) updates.councilRates = Math.round(prev.price * 0.0042);
+        if (!overrides.insurance) updates.insurance = Math.round(prev.price * 0.003);
         if (!overrides.bodyCorp) {
             const isStrata = prev.propertyType === 'Apartment' || prev.propertyType === 'Townhouse';
             updates.bodyCorp = isStrata ? Math.round(prev.price * 0.01) : 0;
         }
-        
-        // Land Tax
-        if (!overrides.landTax) {
-            updates.landTax = Math.round(calculateLandTax(prev.landValue, prev.state));
-        }
-
+        if (!overrides.landTax) updates.landTax = Math.round(calculateLandTax(prev.landValue, prev.state));
         if (Object.keys(updates).length === 0) return prev;
-
-        return {
-            ...prev,
-            ...updates
-        };
+        return { ...prev, ...updates };
     });
   }, [data.price, data.propertyType, data.landValue, data.state, overrides]);
-
-
-  // --- Derived Calculations ---
 
   const loanAmount = useMemo(() => data.price * (data.lvr / 100), [data.price, data.lvr]);
   
@@ -867,20 +742,14 @@ const App = () => {
 
   const annualRepayment = monthlyRepayment * 12;
 
-  // Projections with Inflation
   const projections = useMemo(() => {
     const years = 30;
     const proj = [];
-    
-    // Initial Values
     let currentValue = data.price;
     const initialAnnualRent = data.weeklyRent * 52;
-    
-    // Repayments are fixed for standard variable/fixed loans (simplified)
     const annualRepay = annualRepayment;
     
     for (let year = 0; year <= years; year++) {
-      // Loan Balance
       let balance = 0;
       if (year < data.loanTerm) {
          const r = data.interestRate / 100 / 12;
@@ -894,18 +763,10 @@ const App = () => {
       }
       balance = Math.max(0, balance);
 
-      // Inflation Multipliers
       const rentInflationMult = Math.pow(1 + data.rentalGrowthRate / 100, year);
       const expenseInflationMult = Math.pow(1 + data.inflationRate / 100, year);
-      
-      // Inflated Income
       const currentAnnualRent = initialAnnualRent * rentInflationMult;
-      
-      // Inflated Expenses
-      // Note: PM fee is % of rent, so it scales with rent
       const currentPmFee = currentAnnualRent * (data.propertyManagerRate / 100);
-      
-      // Other expenses scale with general expense inflation
       const currentCouncil = data.councilRates * expenseInflationMult;
       const currentInsurance = data.insurance * expenseInflationMult;
       const currentBodyCorp = data.bodyCorp * expenseInflationMult;
@@ -914,8 +775,6 @@ const App = () => {
       const currentMaintenance = data.maintenance * expenseInflationMult;
       
       const totalOperatingExpenses = currentCouncil + currentInsurance + currentBodyCorp + currentLandTax + currentWater + currentMaintenance + currentPmFee;
-      
-      // Net Cash Flow = Income - Loan - Operating Expenses
       const netCashFlow = currentAnnualRent - annualRepay - totalOperatingExpenses;
       
       proj.push({
@@ -924,13 +783,10 @@ const App = () => {
         value: Math.round(currentValue),
         loan: Math.round(balance),
         equity: Math.round(currentValue - balance),
-        
         rentalIncome: Math.round(currentAnnualRent),
-        expenses: Math.round(totalOperatingExpenses + annualRepay), // For chart "Total Expenses" line (includes repayment)
+        expenses: Math.round(totalOperatingExpenses + annualRepay),
         operatingExpenses: Math.round(totalOperatingExpenses),
         netCashFlow: Math.round(netCashFlow),
-        
-        // Breakdown for current year view
         breakdown: {
             council: Math.round(currentCouncil),
             insurance: Math.round(currentInsurance),
@@ -942,14 +798,11 @@ const App = () => {
             repayment: Math.round(annualRepay)
         }
       });
-      
-      // Capital Growth for next year
       currentValue = currentValue * (1 + data.capitalGrowth / 100);
     }
     return proj;
   }, [data, loanAmount, annualRepayment]);
 
-  // Current View Data (based on slider)
   const currentStats = projections[viewYear];
   const weeklyCashFlow = currentStats.netCashFlow / 52;
   const currentGrossYield = currentStats.value > 0 ? (currentStats.rentalIncome / currentStats.value) * 100 : 0;
@@ -959,7 +812,6 @@ const App = () => {
     setAiLoading(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      // Use Year 0 data for analysis
       const year0 = projections[0];
       
       const prompt = `
@@ -1038,11 +890,10 @@ const App = () => {
         <RechartsTooltip 
             content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} isMobile={isMobile} />} 
             cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
-            position={isMobile ? { x: 0, y: 0 } : undefined}
+            position={isMobile ? { y: 0 } : undefined}
         />
         <Legend />
         <ReferenceLine y={0} stroke={darkMode ? "#e5e7eb" : "#000"} strokeWidth={2} />
-        
         <Area type="monotone" dataKey="rentalIncome" name="Rental Income" stroke="#10b981" strokeWidth={2} fill="url(#colorIncome)" />
         <Area type="monotone" dataKey="expenses" name="Total Expenses" stroke="#f59e0b" strokeWidth={2} fill="url(#colorExpenses)" />
         <Area type="monotone" dataKey="netCashFlow" name="Net Cash Flow" stroke="#6366f1" strokeWidth={2} fill="url(#colorNet)" />
@@ -1080,7 +931,7 @@ const App = () => {
         <RechartsTooltip 
             content={<CustomGraphTooltip setViewYear={setViewYear} currentViewYear={viewYear} isMobile={isMobile} />} 
             cursor={{ stroke: darkMode ? '#6b7280' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }} 
-            position={isMobile ? { x: 0, y: 0 } : undefined}
+            position={isMobile ? { y: 0 } : undefined}
         />
         <Legend />
         <ReferenceLine y={data.price} stroke="#9ca3af" strokeDasharray="3 3" label={{ value: "Purchase Price", position: 'insideTopLeft', fill: darkMode ? "#9ca3af" : "#6b7280", fontSize: 10 }} />
@@ -1094,7 +945,6 @@ const App = () => {
     <div className={`min-h-screen p-4 md:p-8 transition-colors duration-200 text-gray-800 dark:text-gray-100 flex flex-col print:bg-white print:p-0`}>
       <div className="max-w-7xl mx-auto space-y-6 flex-grow w-full print:space-y-4">
         
-        {/* Print Header */}
         <div className="hidden print:block border-b-2 border-gray-800 pb-4 mb-6">
             <div className="flex justify-between items-end">
                 <div>
@@ -1108,7 +958,6 @@ const App = () => {
             </div>
         </div>
 
-        {/* Header (Screen Only) */}
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 print:hidden">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-blue-600 rounded-lg shadow-lg">
@@ -1119,33 +968,17 @@ const App = () => {
             </div>
           </div>
           <div className="flex items-center gap-3 self-end md:self-auto">
-             <button
-                onClick={handlePrint}
-                className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition-colors flex items-center gap-2"
-                title="Export as PDF"
-            >
+             <button onClick={handlePrint} className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition-colors flex items-center gap-2" title="Export as PDF">
                 <Printer className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 <span className="hidden md:inline text-sm font-medium text-gray-700 dark:text-gray-300">Export PDF</span>
             </button>
-             <button
-                onClick={handleFullReset}
-                className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition-colors"
-                aria-label="Reset Calculator"
-                title="Reset to Defaults"
-            >
+             <button onClick={handleFullReset} className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition-colors" aria-label="Reset Calculator" title="Reset to Defaults">
                 <RotateCcw className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </button>
-            <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition-colors"
-                aria-label="Toggle dark mode"
-            >
+            <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition-colors" aria-label="Toggle dark mode">
                 {darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-gray-600" />}
             </button>
-            <button 
-                onClick={fetchAiAnalysis}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:opacity-90 transition-all shadow-md font-medium"
-            >
+            <button onClick={fetchAiAnalysis} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:opacity-90 transition-all shadow-md font-medium">
                 {aiLoading ? <RefreshCw className="animate-spin w-4 h-4"/> : <Sparkles className="w-4 h-4" />}
                 <span className="hidden md:inline">AI Analysis</span>
                 <span className="md:hidden">Analyze</span>
@@ -1167,11 +1000,8 @@ const App = () => {
               
               <div className="space-y-4 print:space-y-2">
                 
-                {/* Suburb Input with Autocomplete (Moved to top) */}
                 <div ref={suburbInputRef} className="relative z-30 print:hidden">
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex justify-between">
-                    <span>Suburb</span>
-                  </label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex justify-between"><span>Suburb</span></label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                     <input 
@@ -1183,16 +1013,10 @@ const App = () => {
                       onFocus={() => data.suburb && handleSuburbChange({ target: { value: data.suburb } } as any)}
                     />
                   </div>
-                  
-                  {/* Autocomplete Dropdown */}
                   {showSuburbSuggestions && suburbSuggestions.length > 0 && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50">
                           {suburbSuggestions.map((suburb, idx) => (
-                              <div 
-                                key={`${suburb.name}-${suburb.state}-${idx}`}
-                                className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-700 dark:text-gray-200 border-b border-gray-50 dark:border-gray-700/50 last:border-0"
-                                onClick={() => handleSuburbSelect(suburb)}
-                              >
+                              <div key={`${suburb.name}-${suburb.state}-${idx}`} className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-700 dark:text-gray-200 border-b border-gray-50 dark:border-gray-700/50 last:border-0" onClick={() => handleSuburbSelect(suburb)}>
                                 <div className="flex justify-between items-center">
                                     <span className="font-medium">{suburb.name}, {suburb.postcode}</span>
                                     <span className="text-gray-400 text-xs">{suburb.state}</span>
@@ -1203,51 +1027,32 @@ const App = () => {
                   )}
                 </div>
 
-                {/* Print only Location Display */}
                 <div className="hidden print:flex justify-between border-b border-gray-100 pb-1">
                     <span className="text-sm text-gray-600">Location</span>
                     <span className="text-sm font-medium">{data.suburb}, {data.state} {data.postcode}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 relative z-20 print:hidden">
-                    {/* Postcode Input */}
                     <div ref={postcodeInputRef} className="relative">
                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Postcode</label>
                          <div className="relative">
                             <Hash className="absolute left-3 top-2.5 w-3 h-3 text-gray-400" />
-                            <input 
-                                type="text"
-                                className="w-full pl-8 pr-2 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                                placeholder="3121"
-                                value={data.postcode}
-                                onChange={handlePostcodeChange}
-                                onFocus={() => data.postcode && handlePostcodeChange({ target: { value: data.postcode } } as any)}
-                            />
+                            <input type="text" className="w-full pl-8 pr-2 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors" placeholder="3121" value={data.postcode} onChange={handlePostcodeChange} onFocus={() => data.postcode && handlePostcodeChange({ target: { value: data.postcode } } as any)} />
                          </div>
                          {showPostcodeSuggestions && postcodeSuggestions.length > 0 && (
                             <div className="absolute top-full left-0 w-64 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50">
                                 {postcodeSuggestions.map((item, idx) => (
-                                    <div 
-                                        key={`${item.postcode}-${idx}`}
-                                        className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-700 dark:text-gray-200 border-b border-gray-50 dark:border-gray-700/50 last:border-0"
-                                        onClick={() => handlePostcodeSelect(item)}
-                                    >
+                                    <div key={`${item.postcode}-${idx}`} className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-700 dark:text-gray-200 border-b border-gray-50 dark:border-gray-700/50 last:border-0" onClick={() => handlePostcodeSelect(item)}>
                                         <span className="font-semibold">{item.postcode}</span> - {item.name}, {item.state}
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
-
-                    {/* State Dropdown */}
                     <div>
                         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">State</label>
                         <div className="relative">
-                            <select 
-                            className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                            value={data.state}
-                            onChange={(e) => handleInputChange('state', e.target.value)}
-                            >
+                            <select className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors" value={data.state} onChange={(e) => handleInputChange('state', e.target.value)}>
                             {STATES.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                             <ChevronDown className="absolute right-2 top-3 w-3 h-3 text-gray-400 pointer-events-none" />
@@ -1255,19 +1060,10 @@ const App = () => {
                     </div>
                 </div>
 
-                {/* Property Type Dropdown */}
                 <div className="relative z-10 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Type</label>
                     <div className="relative print:hidden">
-                        <select 
-                        className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                        value={data.propertyType}
-                        onChange={(e) => {
-                            const newType = e.target.value as PropertyType;
-                            handleInputChange('propertyType', newType);
-                            fetchRentEstimate(undefined, undefined, newType);
-                        }}
-                        >
+                        <select className="w-full pl-2 pr-6 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors" value={data.propertyType} onChange={(e) => { const newType = e.target.value as PropertyType; handleInputChange('propertyType', newType); fetchRentEstimate(undefined, undefined, newType); }}>
                         {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-3 w-3 h-3 text-gray-400 pointer-events-none" />
@@ -1277,14 +1073,7 @@ const App = () => {
 
                 <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Purchase Price</label>
-                  <FormattedNumberInput
-                      step={1000}
-                      className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:p-0 print:text-right print:font-mono"
-                      value={data.price}
-                      onChange={(val: number) => handleInputChange('price', val)}
-                      icon={DollarSign}
-                      min={0}
-                  />
+                  <FormattedNumberInput step={1000} className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:p-0 print:text-right print:font-mono" value={data.price} onChange={(val: number) => handleInputChange('price', val)} icon={DollarSign} min={0} />
                 </div>
 
                 <div className="pt-2 print:pt-0 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
@@ -1298,19 +1087,12 @@ const App = () => {
                         </div>
                         {overrides.landValue && <ResetButton field="landValue" />}
                     </label>
-                    <FormattedNumberInput
-                        className={`w-full pl-10 pr-3 py-2 text-base md:text-sm bg-gray-50 dark:bg-gray-800/50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors ${overrides.landValue ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:bg-transparent print:text-right print:font-mono`}
-                        value={data.landValue}
-                        onChange={(val: number) => handleInputChange('landValue', val)}
-                        icon={LandPlot}
-                        min={0}
-                        max={data.price}
-                    />
+                    <FormattedNumberInput className={`w-full pl-10 pr-3 py-2 text-base md:text-sm bg-gray-50 dark:bg-gray-800/50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors ${overrides.landValue ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:bg-transparent print:text-right print:font-mono`} value={data.landValue} onChange={(val: number) => handleInputChange('landValue', val)} icon={LandPlot} min={0} max={data.price} />
                 </div>
               </div>
             </div>
 
-            {/* Loan Card - MOVED HERE */}
+            {/* Loan Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-none print:p-0">
               <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-gray-900 print:border-b print:border-gray-200 print:pb-2">
                 <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400 print:hidden" />
@@ -1321,79 +1103,39 @@ const App = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">LVR (%)</label>
-                    <FormattedNumberInput
-                      className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto"
-                      value={data.lvr}
-                      onChange={(val: number) => handleInputChange('lvr', val)}
-                      min={0}
-                      max={100}
-                    />
+                    <FormattedNumberInput className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto" value={data.lvr} onChange={(val: number) => handleInputChange('lvr', val)} min={0} max={100} />
                   </div>
                   <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Rate (%)</label>
-                    <FormattedNumberInput
-                      step={0.01}
-                      className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto"
-                      value={data.interestRate}
-                      onChange={(val: number) => handleInputChange('interestRate', val)}
-                      min={0}
-                      max={200}
-                    />
+                    <FormattedNumberInput step={0.01} className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto" value={data.interestRate} onChange={(val: number) => handleInputChange('interestRate', val)} min={0} max={200} />
                   </div>
                 </div>
 
                 <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0">Loan Term (Years)</label>
-                    <input 
-                      type="range"
-                      min="5"
-                      max="30"
-                      className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden"
-                      value={data.loanTerm}
-                      onChange={(e) => handleInputChange('loanTerm', Number(e.target.value))}
-                    />
+                    <input type="range" min="5" max="30" className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden" value={data.loanTerm} onChange={(e) => handleInputChange('loanTerm', Number(e.target.value))} />
                     <div className="text-right text-sm text-gray-500 dark:text-gray-400 mt-1 print:text-left print:font-mono print:text-gray-900 print:mt-0">{data.loanTerm} years</div>
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-700 print:border-none print:pt-2">
                   <div className="flex justify-between items-center mb-1 print:border-b print:border-gray-100 print:pb-1">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 print:text-gray-600">Weekly Rent (per week)</label>
-                    <button 
-                      onClick={() => fetchRentEstimate()}
-                      disabled={!data.suburb || rentEstimateLoading}
-                      className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50 print:hidden"
-                    >
+                    <button onClick={() => fetchRentEstimate()} disabled={!data.suburb || rentEstimateLoading} className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50 print:hidden">
                       {rentEstimateLoading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                       Estimate
                     </button>
                   </div>
                   <div className="flex items-center gap-3 print:block">
-                        <input 
-                        type="range" 
-                        min="0" 
-                        max="10000" 
-                        step="10"
-                        className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden"
-                        value={data.weeklyRent || 0}
-                        onChange={(e) => handleInputChange('weeklyRent', Number(e.target.value))}
-                        />
+                        <input type="range" min="0" max="10000" step="10" className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden" value={data.weeklyRent || 0} onChange={(e) => handleInputChange('weeklyRent', Number(e.target.value))} />
                         <div className="w-32 relative print:w-full">
-                           <FormattedNumberInput
-                                icon={DollarSign}
-                                className="w-full pl-10 pr-2 py-2 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all print:border-none print:p-0 print:font-mono"
-                                value={data.weeklyRent}
-                                onChange={(val: number) => handleInputChange('weeklyRent', val)}
-                                step={10}
-                                min={0}
-                                max={10000}
-                            />
+                           <FormattedNumberInput icon={DollarSign} className="w-full pl-10 pr-2 py-2 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all print:border-none print:p-0 print:font-mono" value={data.weeklyRent} onChange={(val: number) => handleInputChange('weeklyRent', val)} step={10} min={0} max={10000} />
                         </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Expenses Breakdown Card - MOVED HERE */}
+            {/* Expenses Breakdown Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-colors print:shadow-none print:border-none print:p-0 print:col-span-2">
                  <h2 className="text-lg font-semibold mb-5 flex items-center gap-2 text-gray-900 dark:text-white print:text-gray-900 print:border-b print:border-gray-200 print:pb-2">
                     <TrendingUp className="w-5 h-5 text-red-600 dark:text-red-400 print:hidden" />
@@ -1406,85 +1148,37 @@ const App = () => {
                                 <span className="flex items-center">Council <InfoTooltip text="Estimated based on property value (~$900 + 0.1%). Inflates annually." /></span>
                                 {overrides.councilRates && <ResetButton field="councilRates" />}
                             </label>
-                            <FormattedNumberInput
-                                className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`}
-                                value={data.councilRates}
-                                onChange={(val: number) => handleInputChange('councilRates', val)}
-                                min={0}
-                                icon={DollarSign}
-                            />
+                            <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`} value={data.councilRates} onChange={(val: number) => handleInputChange('councilRates', val)} min={0} icon={DollarSign} />
                         </div>
                         <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
                             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between print:text-sm print:text-gray-600 print:mb-0">
                                 <span className="flex items-center">Land Tax <InfoTooltip text="Based on state-specific progressive tax scales for land value. Inflates annually." /></span>
                                 {overrides.landTax && <ResetButton field="landTax" />}
                             </label>
-                            <FormattedNumberInput
-                                className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`}
-                                value={data.landTax}
-                                onChange={(val: number) => handleInputChange('landTax', val)}
-                                min={0}
-                                icon={DollarSign}
-                            />
+                            <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto`} value={data.landTax} onChange={(val: number) => handleInputChange('landTax', val)} min={0} icon={DollarSign} />
                         </div>
                     </div>
                     
-                    <ExpenseSliderRow 
-                        label="Insurance"
-                        infoText="Estimated at ~0.3% of building value. Inflates annually."
-                        value={data.insurance}
-                        onChange={(val) => handleInputChange('insurance', val)}
-                        isOverridden={!!overrides.insurance}
-                        onReset={() => handleResetOverride('insurance')}
-                        max={Math.round(data.price * 0.1)}
-                    />
-
-                    <ExpenseSliderRow 
-                        label="Body Corp"
-                        infoText="Strata fees. ~1% for Apartments/Townhouses, 0 for others. Inflates annually."
-                        value={data.bodyCorp}
-                        onChange={(val) => handleInputChange('bodyCorp', val)}
-                        isOverridden={!!overrides.bodyCorp}
-                        onReset={() => handleResetOverride('bodyCorp')}
-                        max={Math.round(data.price * 0.1)}
-                    />
-
-                    <ExpenseSliderRow 
-                        label="Water Rates"
-                        infoText="Fixed annual estimate (~$840). Inflates annually."
-                        value={data.waterRates}
-                        onChange={(val) => handleInputChange('waterRates', val)}
-                        max={10000}
-                    />
-
-                    <ExpenseSliderRow 
-                        label="Maintenance"
-                        infoText="Annual allowance for repairs. Inflates annually."
-                        value={data.maintenance}
-                        onChange={(val) => handleInputChange('maintenance', val)}
-                        max={Math.round(data.price * 0.1)}
-                    />
+                    <ExpenseSliderRow label="Insurance" infoText="Estimated at ~0.3% of building value. Inflates annually." value={data.insurance} onChange={(val) => handleInputChange('insurance', val)} isOverridden={!!overrides.insurance} onReset={() => handleResetOverride('insurance')} max={Math.round(data.price * 0.1)} icon={DollarSign} />
+                    <ExpenseSliderRow label="Body Corp" infoText="Strata fees. ~1% for Apartments/Townhouses, 0 for others. Inflates annually." value={data.bodyCorp} onChange={(val) => handleInputChange('bodyCorp', val)} isOverridden={!!overrides.bodyCorp} onReset={() => handleResetOverride('bodyCorp')} max={Math.round(data.price * 0.1)} icon={DollarSign} />
+                    <ExpenseSliderRow label="Water Rates" infoText="Fixed annual estimate (~$840). Inflates annually." value={data.waterRates} onChange={(val) => handleInputChange('waterRates', val)} max={10000} icon={DollarSign} />
+                    <ExpenseSliderRow label="Maintenance" infoText="Annual allowance for repairs. Inflates annually." value={data.maintenance} onChange={(val) => handleInputChange('maintenance', val)} max={Math.round(data.price * 0.1)} icon={DollarSign} />
                     
                     <div className="mt-4 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center print:text-sm print:text-gray-600 print:mb-0">
-                            Property Manager Fee ({data.propertyManagerRate}%) <InfoTooltip text="Property Management fee calculated as a percentage of Rental Income." />
+                            Property Manager Fee ({data.propertyManagerRate}%) - ${Math.round(data.weeklyRent * 52 * (data.propertyManagerRate/100)).toLocaleString()}/yr <InfoTooltip text="Property Management fee calculated as a percentage of Rental Income." />
                         </label>
-                        <div className="flex items-center gap-2 print:block">
-                             <input 
-                                type="range" min="0" max="20"
-                                className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden"
-                                value={data.propertyManagerRate}
-                                onChange={(e) => handleInputChange('propertyManagerRate', Number(e.target.value))}
-                            />
-                            <span className="text-xs font-mono w-16 text-right text-gray-900 dark:text-white print:text-sm">
+                        <div className="flex items-center gap-3 print:block">
+                             <input type="range" min="0" max="20" className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600 print:hidden" value={data.propertyManagerRate} onChange={(e) => handleInputChange('propertyManagerRate', Number(e.target.value))} />
+                            <div className="w-32 print:w-auto">
                                 <FormattedNumberInput
-                                    className="w-full py-2 text-right bg-transparent outline-none border-b border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
+                                    className="w-full px-3 py-2 text-right text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all print:border-none print:p-0 print:font-mono"
                                     value={data.propertyManagerRate}
                                     onChange={(val: number) => handleInputChange('propertyManagerRate', val)}
                                     min={0}
                                     max={20}
                                 />
-                            </span>
+                            </div>
                         </div>
                     </div>
                     
@@ -1500,7 +1194,7 @@ const App = () => {
           <div className="lg:col-span-8 space-y-6">
 
              {/* Time Travel Slider - Floating Card UI */}
-             <div className="sticky top-4 z-40 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm rounded-xl p-5 mb-6 print:hidden">
+             <div className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm rounded-xl p-5 mb-6 print:hidden sticky top-4 z-40">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                         <Clock className="w-4 h-4 text-blue-600" />
@@ -1508,14 +1202,7 @@ const App = () => {
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">Slide to view future</span>
                   </div>
-                  <input 
-                    type="range"
-                    min="0"
-                    max="30"
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    value={viewYear}
-                    onChange={(e) => setViewYear(Number(e.target.value))}
-                  />
+                  <input type="range" min="0" max="30" className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600" value={viewYear} onChange={(e) => setViewYear(Number(e.target.value))} />
                   <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
                     <span>Now</span>
                     <span>10 Years</span>
@@ -1526,11 +1213,7 @@ const App = () => {
             
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:grid-cols-3 print:gap-4 print:mb-6">
-              <div className={`rounded-xl p-5 shadow-sm border relative overflow-hidden transition-colors ${
-                  weeklyCashFlow >= 0 
-                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-              } print:shadow-none print:border print:border-gray-300 print:bg-white`}>
+              <div className={`rounded-xl p-5 shadow-sm border relative overflow-hidden transition-colors ${weeklyCashFlow >= 0 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'} print:shadow-none print:border print:border-gray-300 print:bg-white`}>
                  <div className="flex justify-between items-start mb-2">
                     <span className={`text-sm font-medium ${weeklyCashFlow >= 0 ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'} print:text-black`}>Weekly Net Cash Flow</span>
                  </div>
@@ -1554,12 +1237,7 @@ const App = () => {
                     <span>Yield: {currentGrossYield.toFixed(2)}%</span>
                     <div className="flex items-center gap-1">
                         <span>Growth:</span>
-                        <FormattedNumberInput
-                            step={0.1}
-                            className="w-12 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none print:border-none print:bg-transparent print:p-0 print:w-auto text-right"
-                            value={data.rentalGrowthRate}
-                            onChange={(val: number) => handleInputChange('rentalGrowthRate', val)}
-                        />
+                        <FormattedNumberInput step={0.1} className="w-12 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none print:border-none print:bg-transparent print:p-0 print:w-auto text-right" value={data.rentalGrowthRate} onChange={(val: number) => handleInputChange('rentalGrowthRate', val)} />
                         <span>%</span>
                     </div>
                  </div>
@@ -1577,12 +1255,7 @@ const App = () => {
                     <span>Inc. Mortgage</span>
                     <div className="flex items-center gap-1">
                         <span>Inflation:</span>
-                        <FormattedNumberInput 
-                            step={0.1}
-                            className="w-10 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none print:border-none print:bg-transparent print:p-0 print:w-auto text-right"
-                            value={data.inflationRate}
-                            onChange={(val: number) => handleInputChange('inflationRate', val)}
-                        />
+                        <FormattedNumberInput step={0.1} className="w-10 text-xs bg-transparent border-b border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 focus:outline-none print:border-none print:bg-transparent print:p-0 print:w-auto text-right" value={data.inflationRate} onChange={(val: number) => handleInputChange('inflationRate', val)} />
                         <span>%</span>
                     </div>
                  </div>
@@ -1597,12 +1270,7 @@ const App = () => {
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
                         <span className="text-sm font-medium text-gray-900 dark:text-white print:text-black">${Math.round(currentStats.rentalIncome / 52).toLocaleString()}</span>
                     </div>
-                    <ExpensesWithBreakdown 
-                        breakdown={currentStats.breakdown} 
-                        totalExpenses={currentStats.expenses} 
-                        divisor={52} 
-                        label="Expenses" 
-                    />
+                    <ExpensesWithBreakdown breakdown={currentStats.breakdown} totalExpenses={currentStats.expenses} divisor={52} label="Expenses" />
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-200 print:text-black">Net</span>
                         <span className={`text-sm font-bold ${currentStats.netCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} print:text-black`}>
@@ -1617,12 +1285,7 @@ const App = () => {
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
                         <span className="text-sm font-medium text-gray-900 dark:text-white print:text-black">${Math.round(currentStats.rentalIncome / 12).toLocaleString()}</span>
                     </div>
-                    <ExpensesWithBreakdown 
-                        breakdown={currentStats.breakdown} 
-                        totalExpenses={currentStats.expenses} 
-                        divisor={12} 
-                        label="Expenses" 
-                    />
+                    <ExpensesWithBreakdown breakdown={currentStats.breakdown} totalExpenses={currentStats.expenses} divisor={12} label="Expenses" />
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-200 print:text-black">Net</span>
                         <span className={`text-sm font-bold ${currentStats.netCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} print:text-black`}>
@@ -1637,12 +1300,7 @@ const App = () => {
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
                         <span className="text-sm font-medium text-gray-900 dark:text-white print:text-black">${Math.round(currentStats.rentalIncome).toLocaleString()}</span>
                     </div>
-                    <ExpensesWithBreakdown 
-                        breakdown={currentStats.breakdown} 
-                        totalExpenses={currentStats.expenses} 
-                        divisor={1} 
-                        label="Expenses" 
-                    />
+                    <ExpensesWithBreakdown breakdown={currentStats.breakdown} totalExpenses={currentStats.expenses} divisor={1} label="Expenses" />
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-200 print:text-black">Net</span>
                         <span className={`text-sm font-bold ${currentStats.netCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} print:text-black`}>
@@ -1661,41 +1319,22 @@ const App = () => {
                   </h3>
 
                   <div className="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-lg print:hidden">
-                      <button 
-                        onClick={() => setChartMode('cashflow')}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${chartMode === 'cashflow' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
-                      >
-                        Cash Flow
-                      </button>
-                      <button 
-                        onClick={() => setChartMode('wealth')}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${chartMode === 'wealth' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
-                      >
-                        Wealth Projection
-                      </button>
+                      <button onClick={() => setChartMode('cashflow')} className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${chartMode === 'cashflow' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}>Cash Flow</button>
+                      <button onClick={() => setChartMode('wealth')} className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${chartMode === 'wealth' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}>Wealth Projection</button>
                   </div>
 
                   {chartMode === 'wealth' && (
                        <div className="flex items-center gap-2 print:hidden">
                           <label className="text-sm text-gray-600 dark:text-gray-400">Property Value Growth:</label>
                           <div className="flex items-center gap-1">
-                                <FormattedNumberInput
-                                    step={0.1}
-                                    className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white print:border-none print:bg-transparent print:p-0 print:w-auto text-right"
-                                    value={data.capitalGrowth}
-                                    onChange={(val: number) => handleInputChange('capitalGrowth', val)}
-                                />
+                                <FormattedNumberInput step={0.1} className="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white print:border-none print:bg-transparent print:p-0 print:w-auto text-right" value={data.capitalGrowth} onChange={(val: number) => handleInputChange('capitalGrowth', val)} />
                                 <span className="text-sm text-gray-600 dark:text-gray-400">%</span>
                           </div>
                       </div>
                   )}
               </div>
 
-              {/* Cash Flow Chart Container */}
-              <div 
-                className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`}
-                style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
-              >
+              <div className={`${isPrinting || chartMode === 'cashflow' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                 <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
                     <TrendingUp className="w-5 h-5 text-blue-500" />
                     Cash Flow Projection
@@ -1707,11 +1346,7 @@ const App = () => {
                 </div>
               </div>
 
-              {/* Wealth Chart Container */}
-              <div 
-                className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`}
-                style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
-              >
+              <div className={`${isPrinting || chartMode === 'wealth' ? 'block' : 'hidden'} w-full mb-8 print:mb-16`} style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                 <h3 className="hidden print:block text-xl font-bold mb-2 mt-4 text-gray-900 flex items-center gap-2" style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' }}>
                     <Building2 className="w-5 h-5 text-blue-500" />
                     Wealth Projection
@@ -1732,14 +1367,7 @@ const App = () => {
                     AI Investment Analysis
                 </h2>
                 <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 print:text-black print:text-xs">
-                    <ReactMarkdown
-                        components={{
-                            p: ({node, ...props}) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
-                            strong: ({node, ...props}) => <span className="font-semibold text-purple-700 dark:text-purple-400 print:text-black print:font-bold" {...props} />,
-                            ul: ({node, ...props}) => <ul className="list-disc pl-4 space-y-1 mb-2" {...props} />,
-                            li: ({node, ...props}) => <li className="" {...props} />
-                        }}
-                    >
+                    <ReactMarkdown components={{ p: ({node, ...props}) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />, strong: ({node, ...props}) => <span className="font-semibold text-purple-700 dark:text-purple-400 print:text-black print:font-bold" {...props} />, ul: ({node, ...props}) => <ul className="list-disc pl-4 space-y-1 mb-2" {...props} />, li: ({node, ...props}) => <li className="" {...props} /> }}>
                         {aiAnalysis}
                     </ReactMarkdown>
                 </div>
@@ -1748,7 +1376,6 @@ const App = () => {
           </div>
         </div>
         
-        {/* Footer with Disclaimer & Copyright */}
         <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800 print:mt-auto print:border-t print:border-gray-300 print:break-inside-avoid">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400 print:text-gray-600">
                  <div className="max-w-4xl text-center md:text-left">
