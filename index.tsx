@@ -319,6 +319,54 @@ const CustomGraphTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+// Helper component for Expense Sliders
+interface ExpenseSliderRowProps {
+    label: string;
+    infoText: string;
+    value: number;
+    onChange: (val: number) => void;
+    isOverridden?: boolean;
+    onReset?: () => void;
+    max: number;
+}
+
+const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onReset, max }: ExpenseSliderRowProps) => {
+    return (
+        <div className="mb-4 last:mb-0">
+            <div className="flex justify-between items-center mb-1">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center">
+                    {label} <InfoTooltip text={infoText} />
+                </label>
+                {isOverridden && onReset && (
+                     <button 
+                        onClick={onReset} 
+                        className="text-blue-500 hover:text-blue-600 flex items-center gap-1 ml-auto"
+                        title="Reset to estimated value"
+                    >
+                        <Undo2 className="w-3 h-3" /> 
+                        <span className="text-[10px] font-medium">Auto</span>
+                    </button>
+                )}
+            </div>
+            <div className="flex items-center gap-3">
+                 <input 
+                    type="range" min="0" max={max}
+                    className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    value={Math.min(value, max)}
+                    onChange={(e) => onChange(Number(e.target.value))}
+                />
+                <div className="w-24">
+                     <FormattedNumberInput
+                        className={`w-full px-2 py-1 text-right text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
+                        value={value}
+                        onChange={onChange}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
+
 const App = () => {
   // Theme state
   const [darkMode, setDarkMode] = useState(() => {
@@ -1007,7 +1055,7 @@ const App = () => {
                     Annual Expenses
                 </h2>
                 <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 mb-4">
                          <div>
                             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between">
                                 <span className="flex items-center">Council <InfoTooltip text="Estimated based on property value (~$900 + 0.1%). Inflates annually." /></span>
@@ -1021,20 +1069,6 @@ const App = () => {
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between">
-                                <span className="flex items-center">Insurance <InfoTooltip text="Estimated at ~0.3% of building value. Inflates annually." /></span>
-                                {overrides.insurance && <ResetButton field="insurance" />}
-                            </label>
-                            <FormattedNumberInput
-                                className={`w-full px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.insurance ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
-                                value={data.insurance}
-                                onChange={(val: number) => handleInputChange('insurance', val)}
-                            />
-                        </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between">
                                 <span className="flex items-center">Land Tax <InfoTooltip text="Based on state-specific progressive tax scales for land value. Inflates annually." /></span>
                                 {overrides.landTax && <ResetButton field="landTax" />}
                             </label>
@@ -1044,44 +1078,45 @@ const App = () => {
                                 onChange={(val: number) => handleInputChange('landTax', val)}
                             />
                         </div>
-                         <div>
-                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between">
-                                <span className="flex items-center">Body Corp <InfoTooltip text="Strata fees. ~1% for Apartments/Townhouses, 0 for Houses. Inflates annually." /></span>
-                                {overrides.bodyCorp && <ResetButton field="bodyCorp" />}
-                            </label>
-                            <FormattedNumberInput
-                                className={`w-full px-3 py-1.5 text-base md:text-sm border rounded-md bg-transparent text-gray-900 dark:text-white ${overrides.bodyCorp ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
-                                value={data.bodyCorp}
-                                onChange={(val: number) => handleInputChange('bodyCorp', val)}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center">
-                                Water Rates <InfoTooltip text="Fixed annual estimate (~$840). Inflates annually." />
-                            </label>
-                            <FormattedNumberInput
-                                className="w-full px-3 py-1.5 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-white"
-                                value={data.waterRates}
-                                placeholder="840"
-                                onChange={(val: number) => handleInputChange('waterRates', val)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center">
-                                Maintenance <InfoTooltip text="Annual allowance for repairs. Inflates annually." />
-                            </label>
-                            <FormattedNumberInput
-                                className="w-full px-3 py-1.5 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-md bg-transparent text-gray-900 dark:text-white"
-                                value={data.maintenance}
-                                onChange={(val: number) => handleInputChange('maintenance', val)}
-                            />
-                        </div>
                     </div>
                     
-                    <div>
+                    <ExpenseSliderRow 
+                        label="Insurance"
+                        infoText="Estimated at ~0.3% of building value. Inflates annually."
+                        value={data.insurance}
+                        onChange={(val) => handleInputChange('insurance', val)}
+                        isOverridden={!!overrides.insurance}
+                        onReset={() => handleResetOverride('insurance')}
+                        max={10000}
+                    />
+
+                    <ExpenseSliderRow 
+                        label="Body Corp"
+                        infoText="Strata fees. ~1% for Apartments/Townhouses, 0 for Houses. Inflates annually."
+                        value={data.bodyCorp}
+                        onChange={(val) => handleInputChange('bodyCorp', val)}
+                        isOverridden={!!overrides.bodyCorp}
+                        onReset={() => handleResetOverride('bodyCorp')}
+                        max={20000}
+                    />
+
+                    <ExpenseSliderRow 
+                        label="Water Rates"
+                        infoText="Fixed annual estimate (~$840). Inflates annually."
+                        value={data.waterRates}
+                        onChange={(val) => handleInputChange('waterRates', val)}
+                        max={3000}
+                    />
+
+                    <ExpenseSliderRow 
+                        label="Maintenance"
+                        infoText="Annual allowance for repairs. Inflates annually."
+                        value={data.maintenance}
+                        onChange={(val) => handleInputChange('maintenance', val)}
+                        max={10000}
+                    />
+                    
+                    <div className="mt-4">
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center">
                             Property Manager Fee ({data.propertyManagerRate}%) <InfoTooltip text="Property Management fee calculated as a percentage of Rental Income." />
                         </label>
@@ -1096,7 +1131,7 @@ const App = () => {
                         </div>
                     </div>
                     
-                    <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                    <div className="pt-2 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center mt-2">
                          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total Operating Expenses</span>
                          <span className="text-sm font-bold text-red-600 dark:text-red-400">-${currentStats.operatingExpenses.toLocaleString()}</span>
                     </div>
@@ -1106,388 +1141,3 @@ const App = () => {
 
           {/* Results Column */}
           <div className="lg:col-span-8 space-y-6">
-
-             {/* Time Travel Slider - STICKY TOP */}
-             <div className="sticky top-0 z-40 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors mb-6">
-                <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        Projection Timeline: <span className="text-blue-600 dark:text-blue-400">Year {viewYear}</span>
-                    </h3>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {viewYear === 0 ? "Current Day" : "Future Projection"}
-                    </span>
-                </div>
-                <input 
-                    type="range" min="0" max="30" step="1"
-                    className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    value={viewYear}
-                    onChange={(e) => setViewYear(Number(e.target.value))}
-                />
-                <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
-                    <span>Now</span>
-                    <span>10 Years</span>
-                    <span>20 Years</span>
-                    <span>30 Years</span>
-                </div>
-            </div>
-            
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className={`p-6 rounded-xl border shadow-sm transition-colors ${
-                  weeklyCashFlow >= 0 
-                  ? 'bg-green-50 border-green-100 dark:bg-green-900/20 dark:border-green-800' 
-                  : 'bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-800'
-              }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className={`w-5 h-5 ${weeklyCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
-                  <span className={`text-sm font-medium ${weeklyCashFlow >= 0 ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>Weekly Cash Flow</span>
-                </div>
-                <div className={`text-2xl font-bold ${weeklyCashFlow >= 0 ? 'text-green-900 dark:text-green-100' : 'text-red-900 dark:text-red-100'}`}>
-                  {weeklyCashFlow >= 0 ? '+' : '-'}${Math.abs(Math.round(weeklyCashFlow)).toLocaleString()}
-                </div>
-                <div className={`text-xs mt-1 ${weeklyCashFlow >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
-                   Year {viewYear} (Pre-tax)
-                </div>
-              </div>
-
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-                <div className="flex items-center gap-2 mb-2">
-                  <PieChartIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Gross Yield</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {currentGrossYield.toFixed(2)}%
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                   In Year {viewYear}
-                </div>
-              </div>
-
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-                <div className="flex items-center gap-2 mb-2">
-                  <Home className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Est. Value</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                  ${Math.round(currentStats.value).toLocaleString()}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                   Total Equity: ${Math.round(currentStats.equity).toLocaleString()}
-                </div>
-              </div>
-            </div>
-
-            {/* Income & Expense Frequency Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Income Card */}
-                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 transition-colors">
-                    <h3 className="text-sm font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
-                         <div className="p-1.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                            <TrendingUp className="w-4 h-4" />
-                         </div>
-                         Rental Income (Year {viewYear})
-                    </h3>
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700/50">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Weekly</span>
-                            <span className="text-lg font-bold text-gray-900 dark:text-white">${Math.round(currentStats.rentalIncome / 52).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700/50">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Monthly</span>
-                            <span className="text-lg font-bold text-gray-900 dark:text-white">${Math.round(currentStats.rentalIncome / 12).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Yearly</span>
-                            <span className="text-lg font-bold text-green-600 dark:text-green-400">${Math.round(currentStats.rentalIncome).toLocaleString()}</span>
-                        </div>
-                    </div>
-                    {/* Rental Growth Input */}
-                    <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
-                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Annual Rental Growth Rate</span>
-                         <div className="flex items-center gap-1 bg-white dark:bg-gray-800 px-2 py-1 rounded border dark:border-gray-600">
-                             <input 
-                                type="number" 
-                                className="w-12 bg-transparent text-right outline-none text-base md:text-sm font-medium text-gray-900 dark:text-white"
-                                value={data.rentalGrowthRate}
-                                onChange={(e) => handleInputChange('rentalGrowthRate', Number(e.target.value))}
-                            />
-                            <span className="text-xs text-gray-500 dark:text-gray-400">%</span>
-                         </div>
-                    </div>
-                </div>
-
-                {/* Expenses Card */}
-                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 transition-colors">
-                    <h3 className="text-sm font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
-                        <div className="p-1.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-                            <DollarSign className="w-4 h-4" />
-                         </div>
-                        Total Expenses (Year {viewYear})
-                    </h3>
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700/50">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Weekly</span>
-                            <span className="text-lg font-bold text-gray-900 dark:text-white">${Math.round(currentStats.expenses / 52).toLocaleString()}</span>
-                        </div>
-                         <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700/50">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Monthly</span>
-                            <span className="text-lg font-bold text-gray-900 dark:text-white">${Math.round(currentStats.expenses / 12).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Yearly</span>
-                            <span className="text-lg font-bold text-red-600 dark:text-red-400">${Math.round(currentStats.expenses).toLocaleString()}</span>
-                        </div>
-                    </div>
-                     {/* Expense Inflation Input */}
-                     <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
-                         <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Annual Expenses Inflation</span>
-                         <div className="flex items-center gap-1 bg-white dark:bg-gray-800 px-2 py-1 rounded border dark:border-gray-600">
-                             <input 
-                                type="number" 
-                                className="w-12 bg-transparent text-right outline-none text-base md:text-sm font-medium text-gray-900 dark:text-white"
-                                value={data.inflationRate}
-                                onChange={(e) => handleInputChange('inflationRate', Number(e.target.value))}
-                            />
-                            <span className="text-xs text-gray-500 dark:text-gray-400">%</span>
-                         </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Financial Breakdown */}
-             <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 transition-colors">
-              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex justify-between items-center">
-                  <span>Detailed Breakdown (Year {viewYear})</span>
-                  {viewYear === 0 && <span className="text-xs font-normal text-gray-500">Upfront Costs: ${Math.round(totalUpfront).toLocaleString()}</span>}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">Loan Balance</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">${Math.round(currentStats.loan).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">Property Value</span>
-                        <span className="font-medium text-gray-900 dark:text-gray-100">${Math.round(currentStats.value).toLocaleString()}</span>
-                    </div>
-                     <div className="flex justify-between text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">Equity</span>
-                        <span className="font-medium text-green-600 dark:text-green-400">${Math.round(currentStats.equity).toLocaleString()}</span>
-                    </div>
-                    <div className="h-px bg-gray-200 dark:bg-gray-700 my-2"></div>
-                    <div className="flex justify-between text-base font-semibold text-gray-900 dark:text-white">
-                        <span>LVR</span>
-                        <span>{(currentStats.loan / currentStats.value * 100).toFixed(1)}%</span>
-                    </div>
-                </div>
-
-                <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">Annual Rental Income</span>
-                        <span className="font-medium text-green-600 dark:text-green-400">+${Math.round(currentStats.rentalIncome).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">Annual Mortgage Repayments</span>
-                        <span className="font-medium text-red-600 dark:text-red-400">-${Math.round(currentStats.breakdown.repayment).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm group relative">
-                        <span className="text-gray-500 dark:text-gray-400 border-b border-dashed border-gray-400 cursor-help">Total Annual Operating Expenses</span>
-                        <span className="font-medium text-red-600 dark:text-red-400">-${Math.round(currentStats.operatingExpenses).toLocaleString()}</span>
-                        
-                        {/* Tooltip for expense breakdown */}
-                        <div className="absolute bottom-full right-0 mb-2 w-56 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl hidden group-hover:block z-20">
-                            <div className="font-bold mb-1 border-b border-gray-700 pb-1">Year {viewYear} Estimates</div>
-                            <div className="flex justify-between"><span>Council:</span> <span>${currentStats.breakdown.council}</span></div>
-                            <div className="flex justify-between"><span>Water:</span> <span>${currentStats.breakdown.water}</span></div>
-                            <div className="flex justify-between"><span>Insurance:</span> <span>${currentStats.breakdown.insurance}</span></div>
-                            <div className="flex justify-between"><span>Body Corp:</span> <span>${currentStats.breakdown.bodyCorp}</span></div>
-                            <div className="flex justify-between"><span>Land Tax:</span> <span>${currentStats.breakdown.landTax}</span></div>
-                            <div className="flex justify-between"><span>PM Fee:</span> <span>${currentStats.breakdown.pmFee}</span></div>
-                            <div className="flex justify-between"><span>Maint:</span> <span>${currentStats.breakdown.maintenance}</span></div>
-                        </div>
-                    </div>
-                    <div className="h-px bg-gray-200 dark:bg-gray-700 my-2"></div>
-                     <div className="flex justify-between text-base font-semibold">
-                        <span className="text-gray-900 dark:text-white">Net Annual Cash Flow</span>
-                        <span className="text-green-600 dark:text-green-400">
-                            {currentStats.netCashFlow >= 0 ? '+' : '-'}${Math.abs(Math.round(currentStats.netCashFlow)).toLocaleString()}
-                        </span>
-                    </div>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Analysis Section */}
-            {(aiAnalysis || aiLoading) && (
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-xl border border-indigo-100 dark:border-indigo-800 p-6 relative overflow-hidden transition-colors">
-                <div className="flex items-start gap-3">
-                   <div className="p-2 bg-white dark:bg-indigo-950 rounded-lg shadow-sm text-indigo-600 dark:text-indigo-300 mt-1">
-                      <Sparkles className="w-5 h-5" />
-                   </div>
-                   <div className="flex-1">
-                      <h3 className="font-semibold text-indigo-900 dark:text-indigo-100 mb-2">AI Investment Analysis</h3>
-                      {aiLoading ? (
-                        <div className="space-y-2 animate-pulse">
-                          <div className="h-4 bg-indigo-200/50 dark:bg-indigo-700/50 rounded w-3/4"></div>
-                          <div className="h-4 bg-indigo-200/50 dark:bg-indigo-700/50 rounded w-full"></div>
-                          <div className="h-4 bg-indigo-200/50 dark:bg-indigo-700/50 rounded w-5/6"></div>
-                        </div>
-                      ) : (
-                        <div className="text-indigo-800 dark:text-indigo-200 leading-relaxed text-sm">
-                           <ReactMarkdown
-                              components={{
-                                ul: ({node, ...props}) => <ul className="list-disc pl-5 space-y-1 mb-2" {...props} />,
-                                ol: ({node, ...props}) => <ol className="list-decimal pl-5 space-y-1 mb-2" {...props} />,
-                                li: ({node, ...props}) => <li className="pl-1" {...props} />,
-                                strong: ({node, ...props}) => <span className="font-bold text-indigo-900 dark:text-indigo-50" {...props} />,
-                                p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />
-                              }}
-                           >
-                            {aiAnalysis || ''}
-                           </ReactMarkdown>
-                        </div>
-                      )}
-                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Long Term Charts */}
-            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 transition-colors">
-                <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-                    <div className="flex items-center gap-4 bg-white dark:bg-gray-700/50 p-1 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <button
-                             onClick={() => setChartMode('cashflow')}
-                             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${chartMode === 'cashflow' ? 'bg-slate-100 dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}
-                        >
-                            Cash Flow
-                        </button>
-                        <button
-                            onClick={() => setChartMode('wealth')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${chartMode === 'wealth' ? 'bg-slate-100 dark:bg-gray-600 shadow-sm text-blue-600 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}
-                        >
-                            Wealth Projection
-                        </button>
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-xs">
-                        {chartMode === 'wealth' && (
-                            <div className="flex items-center gap-2 bg-white dark:bg-gray-700 px-3 py-1 rounded-full border dark:border-gray-600">
-                                <span className="text-gray-500 dark:text-gray-300">Property Value Growth:</span>
-                                <input 
-                                    type="number" 
-                                    className="w-10 bg-transparent font-medium text-right outline-none text-base md:text-sm border-b border-gray-300 dark:border-gray-500 focus:border-blue-500 text-gray-900 dark:text-white"
-                                    value={data.capitalGrowth}
-                                    onChange={(e) => handleInputChange('capitalGrowth', Number(e.target.value))}
-                                />
-                                <span className="text-gray-500 dark:text-gray-300">%</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                
-                <div className="h-[350px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        {chartMode === 'wealth' ? (
-                            <AreaChart 
-                                data={projections} 
-                                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                                onMouseMove={(e: any) => {
-                                    if (e && e.activeLabel !== undefined) {
-                                        setViewYear(Number(e.activeLabel));
-                                    }
-                                }}
-                            >
-                                <defs>
-                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
-                                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#374151" : "#e2e8f0"} />
-                                <XAxis dataKey="year" tick={{fontSize: 12, fill: '#9ca3af'}} tickLine={false} axisLine={false} interval={4} />
-                                <YAxis tickFormatter={(val) => `$${(val/1000000).toFixed(1)}M`} tick={{fontSize: 12, fill: '#9ca3af'}} tickLine={false} axisLine={false} />
-                                <RechartsTooltip 
-                                    content={<CustomGraphTooltip />}
-                                    cursor={{ stroke: darkMode ? '#4b5563' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }}
-                                />
-                                <Legend />
-                                <Area type="monotone" dataKey="value" name="Property Value" stroke="#2563eb" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
-                                <Area type="monotone" dataKey="equity" name="Equity" stroke="#10b981" strokeWidth={2} fillOpacity={0} fill="#10b981" />
-                                <Line type="monotone" dataKey="loan" name="Loan Balance" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                {/* Current Year Indicator Line */}
-                                {viewYear > 0 && <ReferenceLine x={viewYear} stroke="#f59e0b" strokeDasharray="3 3" label={{ position: 'top', value: `Year ${viewYear}`, fill: '#f59e0b', fontSize: 10 }} />}
-                                {/* Purchase Price Reference Line */}
-                                <ReferenceLine 
-                                    y={data.price} 
-                                    stroke={darkMode ? "#9ca3af" : "#6b7280"} 
-                                    strokeDasharray="3 3" 
-                                    label={{ 
-                                        position: 'insideBottomRight', 
-                                        value: 'Purchase Price', 
-                                        fill: darkMode ? '#9ca3af' : '#6b7280', 
-                                        fontSize: 12 
-                                    }} 
-                                />
-                            </AreaChart>
-                        ) : (
-                            <LineChart 
-                                data={projections} 
-                                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                                onMouseMove={(e: any) => {
-                                    if (e && e.activeLabel !== undefined) {
-                                        setViewYear(Number(e.activeLabel));
-                                    }
-                                }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#374151" : "#e2e8f0"} />
-                                <XAxis dataKey="year" tick={{fontSize: 12, fill: '#9ca3af'}} tickLine={false} axisLine={false} interval={4} />
-                                <YAxis tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`} tick={{fontSize: 12, fill: '#9ca3af'}} tickLine={false} axisLine={false} />
-                                <RechartsTooltip 
-                                    content={<CustomGraphTooltip />}
-                                    cursor={{ stroke: darkMode ? '#4b5563' : '#9ca3af', strokeWidth: 1, strokeDasharray: '4 4' }}
-                                />
-                                <Legend />
-                                <ReferenceLine y={0} stroke={darkMode ? "#9ca3af" : "#374151"} strokeWidth={2} />
-                                <Line type="monotone" dataKey="rentalIncome" name="Rental Income" stroke="#10b981" strokeWidth={2} dot={false} />
-                                <Line type="monotone" dataKey="expenses" name="Total Expenses" stroke="#ef4444" strokeWidth={2} dot={false} />
-                                <Line type="monotone" dataKey="netCashFlow" name="Net Cash Flow" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" dot={false} />
-                                 {/* Current Year Indicator Line */}
-                                 {viewYear > 0 && <ReferenceLine x={viewYear} stroke="#6366f1" strokeDasharray="3 3" label={{ position: 'top', value: `Year ${viewYear}`, fill: '#6366f1', fontSize: 10 }} />}
-                            </LineChart>
-                        )}
-                    </ResponsiveContainer>
-                </div>
-            </div>
-
-            {/* Mobile-only Analysis Button for better UX at bottom */}
-            <div className="md:hidden">
-              <button 
-                onClick={fetchAiAnalysis}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:opacity-90 transition-all shadow-md font-medium"
-              >
-                 {aiLoading ? <RefreshCw className="animate-spin w-4 h-4"/> : <Sparkles className="w-4 h-4" />}
-                 Analyze with AI
-              </button>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Footer Disclaimer */}
-        <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800 text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-                Disclaimer: This calculator provides estimates only and should not be used as financial advice. 
-                Calculations are based on the assumptions provided and may not reflect actual market conditions. 
-                Please refer to actual sales reports, official statistical data, and consult with a qualified financial advisor before making investment decisions.
-            </p>
-        </footer>
-
-      </div>
-    </div>
-  );
-};
-
-const root = createRoot(document.getElementById('root')!);
-root.render(<App />);
