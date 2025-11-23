@@ -97,13 +97,19 @@ body {
 
   /* Custom Print Styles requested by user */
   .print-gradient-green {
-    background: linear-gradient(to right, #dcfce7, #ffffff) !important;
+    background: linear-gradient(180deg, #dcfce7 0%, #ffffff 100%) !important;
     border: 1px solid #bbf7d0 !important;
+    color: black !important;
   }
   
   .print-gradient-red {
-    background: linear-gradient(to right, #fee2e2, #ffffff) !important;
+    background: linear-gradient(180deg, #fee2e2 0%, #ffffff 100%) !important;
     border: 1px solid #fecaca !important;
+    color: black !important;
+  }
+
+  .print-gradient-green *, .print-gradient-red * {
+    color: black !important;
   }
 
   .print-highlight-yellow {
@@ -113,10 +119,11 @@ body {
     padding: 0 4px !important;
     border-radius: 2px !important;
     width: auto !important;
-    min-width: 60px;
+    min-width: 40px;
     text-align: right !important;
     display: inline-block !important;
     color: black !important;
+    font-weight: 600 !important;
   }
 
   .print-card-title {

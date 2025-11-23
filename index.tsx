@@ -267,7 +267,7 @@ const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { b
     );
 };
 
-const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholder, icon: Icon, min, max, ...props }: any) => {
+const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholder, icon: Icon, min, max, prefix = "", suffix = "", printHighlight = false, ...props }: any) => {
   const [inputValue, setInputValue] = useState<string>("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -306,7 +306,7 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
     const raw = e.target.value.replace(/,/g, '');
     if (raw === '') {
          setInputValue('');
-         onChange(0); // Ensure parent state updates to 0 immediately for live calculations
+         onChange(0); 
          return;
     }
 
@@ -334,13 +334,17 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
       }
   };
 
+  // Formatting for custom print view
+  const printValue = (value !== undefined && value !== null) ? Number(value).toLocaleString() : "0";
+  const useCustomPrint = printHighlight || prefix || suffix;
+
   return (
-    <div className="relative w-full">
+    <div className={`relative w-full ${useCustomPrint ? 'print:w-auto' : ''}`}>
         {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10 print:hidden" />}
         <input
             type="text"
             inputMode="decimal"
-            className={`${className} print:border-none print:bg-transparent print:p-0 print:pl-0 print:text-right print:appearance-none print:w-full print:h-auto`}
+            className={`${className} ${useCustomPrint ? 'print:hidden' : 'print:border-none print:bg-transparent print:p-0 print:pl-0 print:text-right print:appearance-none print:w-full print:h-auto'}`}
             value={inputValue}
             onChange={handleChange}
             onFocus={handleFocus}
@@ -349,6 +353,13 @@ const FormattedNumberInput = ({ value, onChange, step = 1, className, placeholde
             placeholder={placeholder}
             {...props}
         />
+        
+        {/* Custom Print View */}
+        {useCustomPrint && (
+            <div className={`hidden print:block text-right font-mono text-sm ${printHighlight ? 'print-highlight-yellow' : ''}`}>
+                {prefix}{printValue}{suffix}
+            </div>
+        )}
     </div>
   );
 };
@@ -376,7 +387,6 @@ const CustomGraphTooltip = ({ active, payload, label, setViewYear, currentViewYe
     const data = payload[0].payload;
     
     if (isMobile) {
-        // Ultra-compact mobile tooltip, fixed position via parent logic often needed, but here we use simple styling
         return (
             <div className="bg-white/95 dark:bg-gray-800/95 border border-gray-200 dark:border-gray-700 rounded shadow-sm px-2 py-1 text-[10px] flex items-center gap-2 whitespace-nowrap">
                 <span className="font-bold text-gray-900 dark:text-white">Yr {label}</span>
@@ -472,12 +482,13 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
                 />
                 <div className="w-32 print:w-auto">
                      <FormattedNumberInput
-                        className={`w-full pl-9 pr-3 py-2 text-right text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:text-sm`}
+                        className={`w-full pl-9 pr-3 py-2 text-right text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isOverridden ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'}`}
                         value={value}
                         onChange={onChange}
                         max={max}
                         min={0}
                         icon={Icon}
+                        prefix="$"
                     />
                 </div>
             </div>
@@ -1073,7 +1084,7 @@ const App = () => {
 
                 <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">Purchase Price</label>
-                  <FormattedNumberInput step={1000} className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:p-0 print:text-right print:font-mono print:text-sm print-highlight-yellow" value={data.price} onChange={(val: number) => handleInputChange('price', val)} icon={DollarSign} min={0} />
+                  <FormattedNumberInput step={1000} className="w-full pl-10 pr-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:p-0 print:text-right print:font-mono print:text-sm" value={data.price} onChange={(val: number) => handleInputChange('price', val)} icon={DollarSign} min={0} prefix="$" printHighlight={true} />
                 </div>
 
                 <div className="pt-2 print:pt-0 print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
@@ -1087,7 +1098,7 @@ const App = () => {
                         </div>
                         {overrides.landValue && <ResetButton field="landValue" />}
                     </label>
-                    <FormattedNumberInput className={`w-full pl-10 pr-3 py-2 text-base md:text-sm bg-gray-50 dark:bg-gray-800/50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors ${overrides.landValue ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:bg-transparent print:text-right print:font-mono print-no-bg print:text-sm`} value={data.landValue} onChange={(val: number) => handleInputChange('landValue', val)} icon={LandPlot} min={0} max={data.price} />
+                    <FormattedNumberInput className={`w-full pl-10 pr-3 py-2 text-base md:text-sm bg-gray-50 dark:bg-gray-800/50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 dark:text-white transition-colors ${overrides.landValue ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:bg-transparent print:text-right print:font-mono print-no-bg print:text-sm`} value={data.landValue} onChange={(val: number) => handleInputChange('landValue', val)} icon={LandPlot} min={0} max={data.price} prefix="$" />
                 </div>
               </div>
             </div>
@@ -1107,7 +1118,7 @@ const App = () => {
                   </div>
                   <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">Rate (%)</label>
-                    <FormattedNumberInput step={0.01} className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto print:text-sm print-highlight-yellow" value={data.interestRate} onChange={(val: number) => handleInputChange('interestRate', val)} min={0} max={200} />
+                    <FormattedNumberInput step={0.01} className="w-full px-3 py-2 text-base md:text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors print:border-none print:bg-transparent print:p-0 print:text-right print:font-mono print:w-auto print:text-sm" value={data.interestRate} onChange={(val: number) => handleInputChange('interestRate', val)} min={0} max={200} suffix="%" printHighlight={true} />
                   </div>
                 </div>
 
@@ -1137,7 +1148,7 @@ const App = () => {
                 {/* Print version of Weekly Rent */}
                 <div className="hidden print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1">
                     <label className="block text-sm font-medium text-gray-600 print:mb-0 print:whitespace-nowrap">Weekly Rent</label>
-                    <FormattedNumberInput className="print:border-none print:p-0 print:text-right print:font-mono print:text-sm print-highlight-yellow" value={data.weeklyRent} onChange={() => {}} step={10} min={0} />
+                    <FormattedNumberInput className="print:border-none print:p-0 print:text-right print:font-mono print:text-sm" value={data.weeklyRent} onChange={() => {}} step={10} min={0} prefix="$" printHighlight={true} />
                 </div>
 
               </div>
@@ -1156,14 +1167,14 @@ const App = () => {
                                 <span className="flex items-center">Council <InfoTooltip text="Estimated based on property value (~$900 + 0.1%). Inflates annually." /></span>
                                 {overrides.councilRates && <ResetButton field="councilRates" />}
                             </label>
-                            <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto print:text-sm`} value={data.councilRates} onChange={(val: number) => handleInputChange('councilRates', val)} min={0} icon={DollarSign} />
+                            <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.councilRates ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto print:text-sm`} value={data.councilRates} onChange={(val: number) => handleInputChange('councilRates', val)} min={0} icon={DollarSign} prefix="$" />
                         </div>
                         <div className="print:flex print:justify-between print:border-b print:border-gray-100 print:pb-1 print:col-span-2">
                             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 flex justify-between print:text-sm print:text-gray-600 print:mb-0 print:whitespace-nowrap">
                                 <span className="flex items-center">Land Tax <InfoTooltip text="Based on state-specific progressive tax scales for land value. Inflates annually." /></span>
                                 {overrides.landTax && <ResetButton field="landTax" />}
                             </label>
-                            <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto print:text-sm`} value={data.landTax} onChange={(val: number) => handleInputChange('landTax', val)} min={0} icon={DollarSign} />
+                            <FormattedNumberInput className={`w-full pl-10 px-3 py-2 text-base md:text-sm border rounded-lg bg-transparent text-gray-900 dark:text-white ${overrides.landTax ? 'border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-600'} print:border-none print:p-0 print:text-right print:font-mono print:w-auto print:text-sm`} value={data.landTax} onChange={(val: number) => handleInputChange('landTax', val)} min={0} icon={DollarSign} prefix="$" />
                         </div>
                     </div>
                     
@@ -1185,6 +1196,7 @@ const App = () => {
                                     onChange={(val: number) => handleInputChange('propertyManagerRate', val)}
                                     min={0}
                                     max={20}
+                                    suffix="%"
                                 />
                             </div>
                         </div>
