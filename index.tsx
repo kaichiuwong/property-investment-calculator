@@ -202,6 +202,68 @@ const InfoTooltip = ({ text }: { text: string }) => (
   </div>
 );
 
+// New component for Expenses Breakdown
+const ExpensesWithBreakdown = ({ breakdown, totalExpenses, divisor, label }: { breakdown: any, totalExpenses: number, divisor: number, label: string }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (ref.current && !ref.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Helper for formatting
+    const fmt = (val: number) => `$${Math.round(val / divisor).toLocaleString()}`;
+
+    return (
+        <div className="relative" ref={ref}>
+            <div 
+                className="flex justify-between items-center mb-2 cursor-pointer group"
+                onClick={() => setIsOpen(!isOpen)}
+                role="button"
+                aria-label="Show expense breakdown"
+            >
+                <span className="text-sm text-gray-600 dark:text-gray-300 border-b border-dashed border-gray-400 dark:border-gray-500 group-hover:text-blue-500 transition-colors flex items-center gap-1">
+                    {label} <HelpCircle className="w-3 h-3 text-gray-400" />
+                </span>
+                <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                    -{fmt(totalExpenses)}
+                </span>
+            </div>
+            {isOpen && (
+                <div className="absolute left-0 bottom-full mb-2 w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-4 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 text-sm">
+                     <h4 className="font-semibold mb-3 pb-2 border-b border-gray-100 dark:border-gray-700 text-xs uppercase tracking-wide">Expense Breakdown</h4>
+                     
+                     <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                        <div className="flex justify-between font-medium text-red-600 dark:text-red-400">
+                            <span>Mortgage</span>
+                            <span>{fmt(breakdown.repayment)}</span>
+                        </div>
+                        {breakdown.council > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Council Rates</span><span>{fmt(breakdown.council)}</span></div>}
+                        {breakdown.landTax > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Land Tax</span><span>{fmt(breakdown.landTax)}</span></div>}
+                        {breakdown.bodyCorp > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Body Corp</span><span>{fmt(breakdown.bodyCorp)}</span></div>}
+                        {breakdown.insurance > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Insurance</span><span>{fmt(breakdown.insurance)}</span></div>}
+                        {breakdown.pmFee > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Property Mgmt</span><span>{fmt(breakdown.pmFee)}</span></div>}
+                        {breakdown.water > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Water</span><span>{fmt(breakdown.water)}</span></div>}
+                        {breakdown.maintenance > 0 && <div className="flex justify-between text-gray-600 dark:text-gray-400 text-xs"><span>Maintenance</span><span>{fmt(breakdown.maintenance)}</span></div>}
+                     </div>
+
+                     <div className="mt-3 pt-2 border-t border-gray-100 dark:border-gray-700 flex justify-between font-bold text-gray-900 dark:text-white">
+                        <span>Total</span>
+                        <span>{fmt(totalExpenses)}</span>
+                     </div>
+                     <div className="absolute -bottom-2 left-6 w-4 h-4 bg-white dark:bg-gray-800 border-b border-r border-gray-200 dark:border-gray-700 rotate-45"></div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // Formatted Number Input Component
 // Displays comma-separated values (e.g. 850,000) when not focused,
 // and reverts to standard number input when editing for better UX/Mobile support.
@@ -1147,17 +1209,46 @@ const App = () => {
 
           {/* Results Column */}
           <div className="lg:col-span-8 space-y-6">
+
+             {/* Time Travel Slider - Sticky on Mobile / Always on Top */}
+             <div className="sticky top-0 z-40 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-sm py-4 border-b border-gray-200 dark:border-gray-700 rounded-b-xl shadow-sm mb-4 -mx-4 px-4 md:mx-0 md:px-0 md:bg-transparent md:border-0 md:py-0 md:shadow-none md:mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        Time Period: Year {viewYear}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Slide to view future</span>
+                  </div>
+                  <input 
+                    type="range"
+                    min="0"
+                    max="30"
+                    className="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    value={viewYear}
+                    onChange={(e) => setViewYear(Number(e.target.value))}
+                  />
+                  <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
+                    <span>Now</span>
+                    <span>10 Years</span>
+                    <span>20 Years</span>
+                    <span>30 Years</span>
+                  </div>
+              </div>
             
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 relative overflow-hidden transition-colors">
+              <div className={`rounded-xl p-5 shadow-sm border relative overflow-hidden transition-colors ${
+                  weeklyCashFlow >= 0 
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+              }`}>
                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">Weekly Net Cash Flow</span>
+                    <span className={`text-sm font-medium ${weeklyCashFlow >= 0 ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>Weekly Net Cash Flow</span>
                  </div>
-                 <div className={`text-2xl font-bold ${weeklyCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                 <div className={`text-2xl font-bold ${weeklyCashFlow >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
                     {weeklyCashFlow >= 0 ? '+' : '-'}${Math.abs(Math.round(weeklyCashFlow)).toLocaleString()}
                  </div>
-                 <div className="mt-2 text-xs text-gray-400">
+                 <div className={`mt-2 text-xs ${weeklyCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} opacity-80`}>
                     After all expenses & tax
                  </div>
               </div>
@@ -1219,10 +1310,12 @@ const App = () => {
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
                         <span className="text-sm font-medium text-gray-900 dark:text-white">${Math.round(currentStats.rentalIncome / 52).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-300">Expenses</span>
-                        <span className="text-sm font-medium text-red-600 dark:text-red-400">-${Math.round(currentStats.expenses / 52).toLocaleString()}</span>
-                    </div>
+                    <ExpensesWithBreakdown 
+                        breakdown={currentStats.breakdown} 
+                        totalExpenses={currentStats.expenses} 
+                        divisor={52} 
+                        label="Expenses" 
+                    />
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-200">Net</span>
                         <span className={`text-sm font-bold ${currentStats.netCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -1237,10 +1330,12 @@ const App = () => {
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
                         <span className="text-sm font-medium text-gray-900 dark:text-white">${Math.round(currentStats.rentalIncome / 12).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-300">Expenses</span>
-                        <span className="text-sm font-medium text-red-600 dark:text-red-400">-${Math.round(currentStats.expenses / 12).toLocaleString()}</span>
-                    </div>
+                    <ExpensesWithBreakdown 
+                        breakdown={currentStats.breakdown} 
+                        totalExpenses={currentStats.expenses} 
+                        divisor={12} 
+                        label="Expenses" 
+                    />
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-200">Net</span>
                         <span className={`text-sm font-bold ${currentStats.netCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -1255,10 +1350,12 @@ const App = () => {
                         <span className="text-sm text-gray-600 dark:text-gray-300">Income</span>
                         <span className="text-sm font-medium text-gray-900 dark:text-white">${Math.round(currentStats.rentalIncome).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-300">Expenses</span>
-                        <span className="text-sm font-medium text-red-600 dark:text-red-400">-${Math.round(currentStats.expenses).toLocaleString()}</span>
-                    </div>
+                    <ExpensesWithBreakdown 
+                        breakdown={currentStats.breakdown} 
+                        totalExpenses={currentStats.expenses} 
+                        divisor={1} 
+                        label="Expenses" 
+                    />
                     <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-200">Net</span>
                         <span className={`text-sm font-bold ${currentStats.netCashFlow >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -1375,32 +1472,6 @@ const App = () => {
                   )}
                 </ResponsiveContainer>
               </div>
-
-               {/* Time Travel Slider - Sticky on Mobile */}
-               <div className="mt-6 sticky top-0 z-40 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-sm py-4 border-b border-gray-200 dark:border-gray-700 md:relative md:bg-transparent md:border-0 md:py-0">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        Time Period: Year {viewYear}
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Slide to view future</span>
-                  </div>
-                  <input 
-                    type="range"
-                    min="0"
-                    max="30"
-                    className="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    value={viewYear}
-                    onChange={(e) => setViewYear(Number(e.target.value))}
-                  />
-                  <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
-                    <span>Now</span>
-                    <span>10 Years</span>
-                    <span>20 Years</span>
-                    <span>30 Years</span>
-                  </div>
-              </div>
-
             </div>
 
             {/* AI Analysis Section */}
