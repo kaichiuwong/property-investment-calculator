@@ -237,13 +237,6 @@ const calculateVICFHBStampDutyBreakdown = (price: number): DutyBreakdown => {
   ];
   for (const t of TIERS) {
     if (price <= t.min) break;
-    const tierTop = Math.min(price, t.max);
-    const excess = t.min === 960000 && t.max === 2000000
-      ? price  // 5.5% applies to full dutiable value
-      : tierTop - t.min;
-    const amt = t.min === 960000 && t.max === 2000000
-      ? price * 0.055
-      : (t.base ?? 0) + (price > t.min ? (Math.min(price, t.max) - t.min) * (t.rate / 100) : 0);
 
     if (t.min === 960000 && t.max === 2000000) {
       steps.push({ tier: `$960,001–$2,000,000`, base: 0, excess: price, rate: '5.5% of full value', amount: Math.round(price * 0.055) });
