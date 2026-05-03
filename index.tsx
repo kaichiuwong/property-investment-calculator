@@ -198,20 +198,83 @@ const getInitialState = (): CalculatorState => {
 
 // --- VIC Stamp Duty Helpers ---
 
+// Official VIC general (non-PPR) rates — contracts on or after 1 July 2021
+// Source: https://www.sro.vic.gov.au/about-us/rates-and-statistics/current-rates/land-transfer-duty-non-principal-place-residence-current-rates
 const calculateVICFullDuty = (price: number): number => {
   if (price <= 25000) return price * 0.014;
   if (price <= 130000) return 350 + (price - 25000) * 0.024;
   if (price <= 960000) return 2870 + (price - 130000) * 0.06;
-  if (price <= 2000000) return 52070 + (price - 960000) * 0.065;
-  return 119070 + (price - 2000000) * 0.065;
+  if (price <= 2000000) return price * 0.055;         // 5.5% of full dutiable value
+  return 110000 + (price - 2000000) * 0.065;
 };
 
-const calculateVICFHBStampDuty = (price: number): number => {
-  if (price <= 600000) return 0;
+interface DutyBreakdownStep {
+  tier: string;
+  base: number;
+  excess: number;
+  rate: string;
+  amount: number;
+}
+
+interface DutyBreakdown {
+  fullDuty: number;
+  afterConcession: number;
+  concessionType: 'exempt' | 'concession' | 'full';
+  steps: DutyBreakdownStep[];
+}
+
+const calculateVICFHBStampDutyBreakdown = (price: number): DutyBreakdown => {
   const fullDuty = calculateVICFullDuty(price);
-  if (price <= 750000) return Math.round(fullDuty * (price - 600000) / 150000);
-  return Math.round(fullDuty);
+
+  // Build tier steps for full duty
+  const steps: DutyBreakdownStep[] = [];
+  const TIERS = [
+    { min: 0,       max: 25000,   base: 0,      rate: 1.4  },
+    { min: 25000,   max: 130000,  base: 350,    rate: 2.4  },
+    { min: 130000,  max: 960000,  base: 2870,   rate: 6.0  },
+    { min: 960000,  max: 2000000, base: null,   rate: 5.5  }, // flat % of full value
+    { min: 2000000, max: Infinity,base: 110000, rate: 6.5  },
+  ];
+  for (const t of TIERS) {
+    if (price <= t.min) break;
+    const tierTop = Math.min(price, t.max);
+    const excess = t.min === 960000 && t.max === 2000000
+      ? price  // 5.5% applies to full dutiable value
+      : tierTop - t.min;
+    const amt = t.min === 960000 && t.max === 2000000
+      ? price * 0.055
+      : (t.base ?? 0) + (price > t.min ? (Math.min(price, t.max) - t.min) * (t.rate / 100) : 0);
+
+    if (t.min === 960000 && t.max === 2000000) {
+      steps.push({ tier: `$960,001–$2,000,000`, base: 0, excess: price, rate: '5.5% of full value', amount: Math.round(price * 0.055) });
+    } else if (t.min === 2000000) {
+      steps.push({ tier: `>$2,000,000`, base: 110000, excess: price - 2000000, rate: '6.5%', amount: Math.round(110000 + (price - 2000000) * 0.065) });
+    } else {
+      const tierAmt = Math.min(price, t.max) - t.min;
+      if (tierAmt <= 0) break;
+      steps.push({
+        tier: `$${t.min.toLocaleString()}–$${t.max === Infinity ? '∞' : t.max.toLocaleString()}`,
+        base: t.base ?? 0,
+        excess: tierAmt,
+        rate: `${t.rate}%`,
+        amount: Math.round(tierAmt * t.rate / 100),
+      });
+    }
+    if (price <= t.max) break;
+  }
+
+  if (price <= 600000) {
+    return { fullDuty: Math.round(fullDuty), afterConcession: 0, concessionType: 'exempt', steps };
+  }
+  if (price <= 750000) {
+    const concessionFactor = (price - 600000) / 150000;
+    return { fullDuty: Math.round(fullDuty), afterConcession: Math.round(fullDuty * concessionFactor), concessionType: 'concession', steps };
+  }
+  return { fullDuty: Math.round(fullDuty), afterConcession: Math.round(fullDuty), concessionType: 'full', steps };
 };
+
+const calculateVICFHBStampDuty = (price: number): number =>
+  calculateVICFHBStampDutyBreakdown(price).afterConcession;
 
 // --- Components ---
 
@@ -531,6 +594,19 @@ const CashFlowBreakdownPage = () => {
     return result;
   }, [minPrice, maxPrice, priceStep, depositPct, inspection, legal, bank, misc]);
 
+  const handleReset = () => {
+    setInspection(500);
+    setLegal(2000);
+    setBank(500);
+    setMisc(1500);
+    setDepositPct(5);
+    setMinPrice(600000);
+    setMaxPrice(800000);
+    setPriceStep(10000);
+  };
+
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
+
   const fmt = (n: number) => `$${n.toLocaleString()}`;
   const inputCls = "w-full pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors";
   const inputClsNoIcon = "w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors";
@@ -538,11 +614,21 @@ const CashFlowBreakdownPage = () => {
   return (
     <div className="space-y-6">
       {/* Page Title */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Cash Flow Breakdown</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Estimate of total upfront cash required to purchase a property in Victoria as a First Home Buyer.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Cash Flow Breakdown</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Estimate of total upfront cash required to purchase a property in Victoria as a First Home Buyer.
+          </p>
+        </div>
+        <button
+          onClick={handleReset}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shrink-0"
+          title="Reset to default values"
+        >
+          <RotateCcw className="w-4 h-4" />
+          Reset Defaults
+        </button>
       </div>
 
       {/* Stamp Duty Info Box */}
@@ -633,12 +719,15 @@ const CashFlowBreakdownPage = () => {
               {rows.map((row) => (
                 <tr
                   key={row.price}
-                  className={`border-b border-gray-50 dark:border-gray-700/50 last:border-0 ${
-                    row.stampDuty === 0
-                      ? 'bg-green-50/50 dark:bg-green-900/10'
-                      : row.price <= 750000
-                        ? 'bg-amber-50/50 dark:bg-amber-900/10'
-                        : ''
+                  onClick={() => setSelectedPrice(selectedPrice === row.price ? null : row.price)}
+                  className={`border-b border-gray-50 dark:border-gray-700/50 last:border-0 cursor-pointer ${
+                    selectedPrice === row.price
+                      ? 'ring-2 ring-inset ring-blue-400 dark:ring-blue-500'
+                      : row.stampDuty === 0
+                        ? 'bg-green-50/50 dark:bg-green-900/10 hover:bg-green-100/60 dark:hover:bg-green-900/20'
+                        : row.price <= 750000
+                          ? 'bg-amber-50/50 dark:bg-amber-900/10 hover:bg-amber-100/60 dark:hover:bg-amber-900/20'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'
                   }`}
                 >
                   <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-white tabular-nums">{fmt(row.price)}</td>
@@ -678,6 +767,94 @@ const CashFlowBreakdownPage = () => {
           </span>
         </div>
       </div>
+
+      {/* Stamp Duty Breakdown Panel */}
+      {selectedPrice !== null && (() => {
+        const bd = calculateVICFHBStampDutyBreakdown(selectedPrice);
+        return (
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-800 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Stamp Duty Breakdown — {fmt(selectedPrice)}
+              </h3>
+              <button onClick={() => setSelectedPrice(null)} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">✕ Close</button>
+            </div>
+
+            <div className="overflow-x-auto mb-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                    <th className="text-left px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Tier (Dutiable Value)</th>
+                    <th className="text-right px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Amount in Tier</th>
+                    <th className="text-right px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Rate</th>
+                    <th className="text-right px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Duty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bd.steps.map((s, i) => (
+                    <tr key={i} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                      <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{s.tier}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-gray-600 dark:text-gray-400">{fmt(s.excess)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-gray-600 dark:text-gray-400">{s.rate}</td>
+                      <td className="px-3 py-2 text-right tabular-nums font-medium text-gray-900 dark:text-white">{fmt(s.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50">
+                    <td colSpan={3} className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200">Full Standard Duty</td>
+                    <td className="px-3 py-2 text-right tabular-nums font-bold text-gray-900 dark:text-white">{fmt(bd.fullDuty)}</td>
+                  </tr>
+                  {bd.concessionType !== 'full' && (
+                    <tr className="bg-gray-50 dark:bg-gray-700/50">
+                      <td colSpan={3} className="px-3 py-2 font-semibold"
+                        style={{ color: bd.concessionType === 'exempt' ? '#16a34a' : '#d97706' }}
+                      >
+                        {bd.concessionType === 'exempt'
+                          ? 'FHB Exemption (≤$600k)'
+                          : `FHB Concession — scaled by ${(((selectedPrice - 600000) / 150000) * 100).toFixed(1)}%`}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums font-bold"
+                        style={{ color: bd.concessionType === 'exempt' ? '#16a34a' : '#d97706' }}
+                      >
+                        {bd.concessionType === 'exempt' ? 'Exempt' : fmt(bd.afterConcession)}
+                      </td>
+                    </tr>
+                  )}
+                </tfoot>
+              </table>
+            </div>
+
+            <div className="flex flex-wrap gap-6 text-sm">
+              <div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Full Standard Duty</div>
+                <div className="font-bold text-gray-900 dark:text-white">{fmt(bd.fullDuty)}</div>
+              </div>
+              {bd.concessionType !== 'full' && (
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">After FHB {bd.concessionType === 'exempt' ? 'Exemption' : 'Concession'}</div>
+                  <div className={`font-bold ${bd.concessionType === 'exempt' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {bd.concessionType === 'exempt' ? '$0 (Exempt)' : fmt(bd.afterConcession)}
+                  </div>
+                </div>
+              )}
+              {bd.concessionType !== 'full' && (
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">You Save</div>
+                  <div className="font-bold text-green-600 dark:text-green-400">{fmt(bd.fullDuty - bd.afterConcession)}</div>
+                </div>
+              )}
+            </div>
+
+            <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+              Source:{' '}
+              <a href="https://www.sro.vic.gov.au/about-us/rates-and-statistics/current-rates/land-transfer-duty-non-principal-place-residence-current-rates" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">SRO VIC — General Rates</a>
+              {' '}·{' '}
+              <a href="https://www.sro.vic.gov.au/buying-property/land-transfer-stamp-duty/concessions-exemptions-and-waivers/first-home-buyers/first-home-buyer-duty-exemption-or-concession" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">FHB Concession</a>
+            </p>
+          </div>
+        );
+      })()}
 
       <p className="text-xs text-gray-500 dark:text-gray-400">
         * Stamp duty calculated per{' '}
