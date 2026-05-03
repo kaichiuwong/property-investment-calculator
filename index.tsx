@@ -196,6 +196,23 @@ const getInitialState = (): CalculatorState => {
     };
 };
 
+// --- VIC Stamp Duty Helpers ---
+
+const calculateVICFullDuty = (price: number): number => {
+  if (price <= 25000) return price * 0.014;
+  if (price <= 130000) return 350 + (price - 25000) * 0.024;
+  if (price <= 960000) return 2870 + (price - 130000) * 0.06;
+  if (price <= 2000000) return 52070 + (price - 960000) * 0.065;
+  return 119070 + (price - 2000000) * 0.065;
+};
+
+const calculateVICFHBStampDuty = (price: number): number => {
+  if (price <= 600000) return 0;
+  const fullDuty = calculateVICFullDuty(price);
+  if (price <= 750000) return Math.round(fullDuty * (price - 600000) / 150000);
+  return Math.round(fullDuty);
+};
+
 // --- Components ---
 
 const InfoTooltip = ({ text }: { text: string }) => (
@@ -492,6 +509,192 @@ const ExpenseSliderRow = ({ label, infoText, value, onChange, isOverridden, onRe
     );
 }
 
+const CashFlowBreakdownPage = () => {
+  const [inspection, setInspection] = useState(500);
+  const [legal, setLegal] = useState(2000);
+  const [bank, setBank] = useState(500);
+  const [misc, setMisc] = useState(1500);
+  const [depositPct, setDepositPct] = useState(5);
+  const [minPrice, setMinPrice] = useState(600000);
+  const [maxPrice, setMaxPrice] = useState(800000);
+  const [priceStep, setPriceStep] = useState(10000);
+
+  const rows = useMemo(() => {
+    const result = [];
+    const safeStep = Math.max(1000, priceStep);
+    for (let price = minPrice; price <= maxPrice; price += safeStep) {
+      const deposit = Math.round(price * depositPct / 100);
+      const stampDuty = calculateVICFHBStampDuty(price);
+      const total = deposit + inspection + legal + bank + misc + stampDuty;
+      result.push({ price, deposit, stampDuty, total });
+    }
+    return result;
+  }, [minPrice, maxPrice, priceStep, depositPct, inspection, legal, bank, misc]);
+
+  const fmt = (n: number) => `$${n.toLocaleString()}`;
+  const inputCls = "w-full pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors";
+  const inputClsNoIcon = "w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors";
+
+  return (
+    <div className="space-y-6">
+      {/* Page Title */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Cash Flow Breakdown</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Estimate of total upfront cash required to purchase a property in Victoria as a First Home Buyer.
+        </p>
+      </div>
+
+      {/* Stamp Duty Info Box */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2 flex items-center gap-2">
+          <HelpCircle className="w-4 h-4 flex-shrink-0" />
+          VIC First Home Buyer — Land Transfer (Stamp) Duty
+        </h3>
+        <ul className="text-xs text-blue-800 dark:text-blue-300 space-y-1">
+          <li>• Properties up to <strong>$600,000</strong>: Full exemption — no stamp duty payable.</li>
+          <li>• Properties <strong>$600,001 – $750,000</strong>: Reduced (concession) duty — full duty scaled linearly from $0 at $600k to full duty at $750k.</li>
+          <li>• Properties above <strong>$750,000</strong>: Full standard stamp duty applies (no FHB concession).</li>
+        </ul>
+        <a
+          href="https://www.sro.vic.gov.au/buying-property/land-transfer-stamp-duty/concessions-exemptions-and-waivers/first-home-buyers/first-home-buyer-duty-exemption-or-concession"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          View official SRO Victoria details ↗
+        </a>
+      </div>
+
+      {/* Adjustable Costs & Range Settings */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-5 space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Adjustable Costs</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Building Inspection</label>
+              <FormattedNumberInput className={inputCls} value={inspection} onChange={setInspection} min={0} icon={DollarSign} prefix="$" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Legal Fees (Conveyancing)</label>
+              <FormattedNumberInput className={inputCls} value={legal} onChange={setLegal} min={0} icon={DollarSign} prefix="$" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Bank Fees</label>
+              <FormattedNumberInput className={inputCls} value={bank} onChange={setBank} min={0} icon={DollarSign} prefix="$" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Miscellaneous (Fixed)</label>
+              <FormattedNumberInput className={inputCls} value={misc} onChange={setMisc} min={0} icon={DollarSign} prefix="$" />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Price Range</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Min Price</label>
+              <FormattedNumberInput className={inputCls} value={minPrice} onChange={setMinPrice} step={10000} min={0} icon={DollarSign} prefix="$" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Max Price</label>
+              <FormattedNumberInput className={inputCls} value={maxPrice} onChange={(val: number) => setMaxPrice(Math.max(minPrice + priceStep, val))} step={10000} min={0} icon={DollarSign} prefix="$" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Price Increment</label>
+              <FormattedNumberInput className={inputCls} value={priceStep} onChange={(val: number) => setPriceStep(Math.max(1000, val))} step={1000} min={1000} icon={DollarSign} prefix="$" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Deposit Rate</label>
+              <FormattedNumberInput className={inputClsNoIcon} value={depositPct} onChange={(val: number) => setDepositPct(Math.max(1, Math.min(100, val)))} step={1} min={1} max={100} suffix="%" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Property Price</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Deposit (Day 0)</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Building Inspection</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Legal Fees</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Bank Fees</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Misc (Fixed)</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Stamp Duty</th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">Total Required</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr
+                  key={row.price}
+                  className={`border-b border-gray-50 dark:border-gray-700/50 last:border-0 ${
+                    row.stampDuty === 0
+                      ? 'bg-green-50/50 dark:bg-green-900/10'
+                      : row.price <= 750000
+                        ? 'bg-amber-50/50 dark:bg-amber-900/10'
+                        : ''
+                  }`}
+                >
+                  <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-white tabular-nums">{fmt(row.price)}</td>
+                  <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">{fmt(row.deposit)}</td>
+                  <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">{fmt(inspection)}</td>
+                  <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">{fmt(legal)}</td>
+                  <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">{fmt(bank)}</td>
+                  <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">{fmt(misc)}</td>
+                  <td className={`px-4 py-2.5 text-right font-medium tabular-nums ${
+                    row.stampDuty === 0
+                      ? 'text-green-600 dark:text-green-400'
+                      : row.price <= 750000
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    {row.stampDuty === 0 ? 'Exempt' : fmt(row.stampDuty)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-bold text-gray-900 dark:text-white tabular-nums">{fmt(row.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* Legend */}
+        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-sm bg-green-100 dark:bg-green-900/40 border border-green-300 dark:border-green-700 inline-block" />
+            FHB Exempt (≤$600k)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-sm bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 inline-block" />
+            FHB Concession ($600k–$750k)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 inline-block" />
+            Full Stamp Duty (&gt;$750k)
+          </span>
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        * Stamp duty calculated per{' '}
+        <a
+          href="https://www.sro.vic.gov.au/buying-property/land-transfer-stamp-duty/concessions-exemptions-and-waivers/first-home-buyers/first-home-buyer-duty-exemption-or-concession"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:underline"
+        >
+          VIC First Home Buyer Duty Exemption/Concession rules
+        </a>{' '}
+        from the State Revenue Office Victoria. Figures are estimates only — verify with a licensed conveyancer or solicitor.
+      </p>
+    </div>
+  );
+};
+
 const App = () => {
   // ... (State definitions remain unchanged) ...
   const [darkMode, setDarkMode] = useState(() => {
@@ -500,6 +703,8 @@ const App = () => {
     }
     return false;
   });
+
+  const [activeTab, setActiveTab] = useState<'calculator' | 'cashflow'>('calculator');
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -1031,15 +1236,45 @@ const App = () => {
             <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition-colors" aria-label="Toggle dark mode">
                 {darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-gray-600" />}
             </button>
-            <button onClick={fetchAiAnalysis} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:opacity-90 transition-all shadow-md font-medium">
-                {aiLoading ? <RefreshCw className="animate-spin w-4 h-4"/> : <Sparkles className="w-4 h-4" />}
-                <span className="hidden md:inline">AI Analysis</span>
-                <span className="md:hidden">Analyze</span>
-            </button>
+            {activeTab === 'calculator' && (
+              <button onClick={fetchAiAnalysis} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:opacity-90 transition-all shadow-md font-medium">
+                  {aiLoading ? <RefreshCw className="animate-spin w-4 h-4"/> : <Sparkles className="w-4 h-4" />}
+                  <span className="hidden md:inline">AI Analysis</span>
+                  <span className="md:hidden">Analyze</span>
+              </button>
+            )}
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 print:block">
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 print:hidden">
+          <button
+            onClick={() => setActiveTab('calculator')}
+            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'calculator'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            Investment Calculator
+          </button>
+          <button
+            onClick={() => setActiveTab('cashflow')}
+            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'cashflow'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            Cash Flow Breakdown
+          </button>
+        </div>
+
+        {/* Cash Flow Breakdown Tab */}
+        {activeTab === 'cashflow' && <CashFlowBreakdownPage />}
+
+        {/* Investment Calculator Tab */}
+        {activeTab === 'calculator' && <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 print:block">
           
           {/* Inputs Column */}
           <div className="lg:col-span-4 space-y-6 print:grid print:grid-cols-2 print:gap-6 print:space-y-0 print:mb-6">
@@ -1446,7 +1681,7 @@ const App = () => {
               </div>
             )}
           </div>
-        </div>
+        </div>}
         
         <footer className="mt-12 py-6 border-t border-gray-200 dark:border-gray-800 print:mt-auto print:border-t print:border-gray-300 print:break-inside-avoid">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400 print:text-gray-600">
