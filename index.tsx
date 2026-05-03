@@ -600,9 +600,10 @@ const CashFlowBreakdownPage = () => {
       const stampDuty = calculateVICFHBStampDuty(price);
       const transferRegFee = calculateVICTransferRegistrationFee(price);
       const mortgageRegFee = VIC_MORTGAGE_REGISTRATION_FEE;
-      const govtFees = stampDuty + transferRegFee + mortgageRegFee;
-      const total = deposit + inspection + legal + bank + misc + govtFees;
-      result.push({ price, deposit, stampDuty, transferRegFee, mortgageRegFee, govtFees, total });
+      const bankTotal = bank + transferRegFee + mortgageRegFee;
+      const govtFees = stampDuty;
+      const total = deposit + inspection + legal + bankTotal + misc + govtFees;
+      result.push({ price, deposit, stampDuty, transferRegFee, mortgageRegFee, bankTotal, govtFees, total });
     }
     return result;
   }, [minPrice, maxPrice, priceStep, depositPct, inspection, legal, bank, misc]);
@@ -618,7 +619,17 @@ const CashFlowBreakdownPage = () => {
     setPriceStep(10000);
   };
 
-  const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
+  const [sliderPrice, setSliderPrice] = useState(minPrice);
+  useEffect(() => {
+    setSliderPrice(prev => {
+      const safeStep = Math.max(1000, priceStep);
+      const clamped = Math.max(minPrice, Math.min(maxPrice, prev));
+      return minPrice + Math.round((clamped - minPrice) / safeStep) * safeStep;
+    });
+  }, [minPrice, maxPrice, priceStep]);
+  const sliderBd = calculateVICFHBStampDutyBreakdown(sliderPrice);
+  const sliderTransferReg = calculateVICTransferRegistrationFee(sliderPrice);
+  const sliderBankTotal = bank + sliderTransferReg + VIC_MORTGAGE_REGISTRATION_FEE;
 
   const fmt = (n: number) => `$${n.toLocaleString()}`;
   const inputCls = "w-full pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-colors";
@@ -712,6 +723,125 @@ const CashFlowBreakdownPage = () => {
         </div>
       </div>
 
+      {/* Stamp Duty Breakdown — Slider */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-800 p-5 space-y-5">
+        <div className="flex flex-wrap items-center gap-4">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+            Stamp Duty Breakdown — {fmt(sliderPrice)}
+          </h3>
+          <div className="flex items-center gap-2 flex-1 min-w-[220px]">
+            <span className="text-xs text-gray-400 whitespace-nowrap">{fmt(minPrice)}</span>
+            <input
+              type="range"
+              min={minPrice}
+              max={maxPrice}
+              step={Math.max(1000, priceStep)}
+              value={sliderPrice}
+              onChange={e => setSliderPrice(Number(e.target.value))}
+              className="flex-1 accent-blue-500 cursor-pointer"
+            />
+            <span className="text-xs text-gray-400 whitespace-nowrap">{fmt(maxPrice)}</span>
+          </div>
+        </div>
+
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Stamp Duty (Govt. Fee)</div>
+            <div className={`font-bold text-sm ${
+              sliderBd.concessionType === 'exempt' ? 'text-green-600 dark:text-green-400'
+              : sliderBd.concessionType === 'concession' ? 'text-amber-600 dark:text-amber-400'
+              : 'text-red-600 dark:text-red-400'
+            }`}>
+              {sliderBd.afterConcession === 0 ? '$0 (Exempt)' : fmt(sliderBd.afterConcession)}
+            </div>
+            {sliderBd.concessionType !== 'full' && (
+              <div className="text-xs text-gray-400 mt-0.5">Full duty: {fmt(sliderBd.fullDuty)}</div>
+            )}
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Bank Fees (incl. reg. fees)</div>
+            <div className="font-bold text-sm text-gray-900 dark:text-white">{fmt(sliderBankTotal)}</div>
+            <div className="text-xs text-gray-400 mt-0.5">Lender: {fmt(bank)} + Reg: {fmt(sliderTransferReg + VIC_MORTGAGE_REGISTRATION_FEE)}</div>
+          </div>
+          {sliderBd.concessionType !== 'full' ? (
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border border-green-100 dark:border-green-800">
+              <div className="text-xs text-green-600 dark:text-green-300 mb-1 font-medium">FHB Savings</div>
+              <div className="font-bold text-sm text-green-700 dark:text-green-300">{fmt(sliderBd.fullDuty - sliderBd.afterConcession)}</div>
+              <div className="text-xs text-gray-400 mt-0.5">{sliderBd.concessionType === 'exempt' ? 'Full exemption' : 'Concession applied'}</div>
+            </div>
+          ) : (
+            <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">FHB Status</div>
+              <div className="font-bold text-sm text-red-600 dark:text-red-400">Full Duty</div>
+              <div className="text-xs text-gray-400 mt-0.5">No FHB concession (&gt;$750k)</div>
+            </div>
+          )}
+        </div>
+
+        {/* Stamp duty tier breakdown */}
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Stamp Duty Calculation</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Tier (Dutiable Value)</th>
+                  <th className="text-right px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Amount in Tier</th>
+                  <th className="text-right px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Rate</th>
+                  <th className="text-right px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Duty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sliderBd.steps.map((s, i) => (
+                  <tr key={i} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                    <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{s.tier}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-600 dark:text-gray-400">{fmt(s.excess)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-gray-600 dark:text-gray-400">{s.rate}</td>
+                    <td className="px-3 py-2 text-right tabular-nums font-medium text-gray-900 dark:text-white">{fmt(s.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50">
+                  <td colSpan={3} className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200">Full Standard Duty</td>
+                  <td className="px-3 py-2 text-right tabular-nums font-bold text-gray-900 dark:text-white">{fmt(sliderBd.fullDuty)}</td>
+                </tr>
+                {sliderBd.concessionType !== 'full' && (
+                  <tr className="bg-gray-50 dark:bg-gray-700/50">
+                    <td colSpan={3} className="px-3 py-2 font-semibold"
+                      style={{ color: sliderBd.concessionType === 'exempt' ? '#16a34a' : '#d97706' }}
+                    >
+                      {sliderBd.concessionType === 'exempt'
+                        ? 'FHB Exemption (≤$600k)'
+                        : `FHB Concession — scaled by ${(((sliderPrice - 600000) / 150000) * 100).toFixed(1)}%`}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums font-bold"
+                      style={{ color: sliderBd.concessionType === 'exempt' ? '#16a34a' : '#d97706' }}
+                    >
+                      {sliderBd.concessionType === 'exempt' ? 'Exempt ($0)' : fmt(sliderBd.afterConcession)}
+                    </td>
+                  </tr>
+                )}
+                <tr className="bg-blue-100 dark:bg-blue-900/40 border-t-2 border-blue-300 dark:border-blue-700">
+                  <td colSpan={3} className="px-3 py-2 font-bold text-blue-800 dark:text-blue-200">Total Stamp Duty (Govt. Fee)</td>
+                  <td className="px-3 py-2 text-right tabular-nums font-bold text-blue-800 dark:text-blue-200">{fmt(sliderBd.afterConcession)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          Sources:{' '}
+          <a href="https://www.sro.vic.gov.au/about-us/rates-and-statistics/current-rates/land-transfer-duty-non-principal-place-residence-current-rates" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">SRO VIC stamp duty rates</a>
+          {' '}·{' '}
+          <a href="https://www.sro.vic.gov.au/buying-property/land-transfer-stamp-duty/concessions-exemptions-and-waivers/first-home-buyers/first-home-buyer-duty-exemption-or-concession" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">FHB concession</a>
+          {' '}·{' '}
+          <a href="https://www.lsv.com.au/fees-and-charges" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">Land Services VIC registration fees</a>
+        </p>
+      </div>
+
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
@@ -724,7 +854,7 @@ const CashFlowBreakdownPage = () => {
                 <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Legal Fees</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Bank Fees</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Misc (Fixed)</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Govt. Fees <span className="font-normal text-xs text-gray-400">(click row ↓)</span></th>
+                <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">Stamp Duty</th>
                 <th className="text-right px-4 py-3 font-semibold text-gray-900 dark:text-white whitespace-nowrap">Total Required</th>
               </tr>
             </thead>
@@ -732,9 +862,9 @@ const CashFlowBreakdownPage = () => {
               {rows.map((row) => (
                 <tr
                   key={row.price}
-                  onClick={() => setSelectedPrice(selectedPrice === row.price ? null : row.price)}
+                  onClick={() => setSliderPrice(row.price)}
                   className={`border-b border-gray-50 dark:border-gray-700/50 last:border-0 cursor-pointer ${
-                    selectedPrice === row.price
+                    sliderPrice === row.price
                       ? 'ring-2 ring-inset ring-blue-400 dark:ring-blue-500'
                       : row.stampDuty === 0
                         ? 'bg-green-50/50 dark:bg-green-900/10 hover:bg-green-100/60 dark:hover:bg-green-900/20'
@@ -747,7 +877,10 @@ const CashFlowBreakdownPage = () => {
                   <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">{fmt(row.deposit)}</td>
                   <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">{fmt(inspection)}</td>
                   <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">{fmt(legal)}</td>
-                  <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">{fmt(bank)}</td>
+                  <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">
+                    <div>{fmt(row.bankTotal)}</div>
+                    <div className="text-xs font-normal text-gray-400">incl. reg. fees</div>
+                  </td>
                   <td className="px-4 py-2.5 text-right text-gray-600 dark:text-gray-300 tabular-nums">{fmt(misc)}</td>
                   <td className={`px-4 py-2.5 text-right font-medium tabular-nums ${
                     row.stampDuty === 0
@@ -779,134 +912,12 @@ const CashFlowBreakdownPage = () => {
             <span className="w-3 h-3 rounded-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 inline-block" />
             Full Stamp Duty (&gt;$750k)
           </span>
-          <span className="ml-auto">Govt. Fees = Stamp Duty + Title Transfer Reg. + Mortgage Reg.</span>
+          <span className="ml-auto">Bank Fees = Lender fees + Title Transfer Reg. + Mortgage Reg.</span>
         </div>
       </div>
 
-      {/* Government Fees Breakdown Panel */}
-      {selectedPrice !== null && (() => {
-        const bd = calculateVICFHBStampDutyBreakdown(selectedPrice);
-        const transferReg = calculateVICTransferRegistrationFee(selectedPrice);
-        const mortgageReg = VIC_MORTGAGE_REGISTRATION_FEE;
-        const totalGovt = bd.afterConcession + transferReg + mortgageReg;
-        return (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-800 p-5 space-y-5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Government Fees Breakdown — {fmt(selectedPrice)}
-              </h3>
-              <button onClick={() => setSelectedPrice(null)} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">✕ Close</button>
-            </div>
-
-            {/* Summary cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Stamp Duty</div>
-                <div className={`font-bold text-sm ${
-                  bd.concessionType === 'exempt' ? 'text-green-600 dark:text-green-400'
-                  : bd.concessionType === 'concession' ? 'text-amber-600 dark:text-amber-400'
-                  : 'text-red-600 dark:text-red-400'
-                }`}>
-                  {bd.afterConcession === 0 ? '$0 (Exempt)' : fmt(bd.afterConcession)}
-                </div>
-                {bd.concessionType !== 'full' && (
-                  <div className="text-xs text-gray-400 mt-0.5">Full: {fmt(bd.fullDuty)}</div>
-                )}
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Title Transfer Registration</div>
-                <div className="font-bold text-sm text-gray-900 dark:text-white">{fmt(transferReg)}</div>
-                <div className="text-xs text-gray-400 mt-0.5">Land Services VIC</div>
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-3">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Mortgage Registration</div>
-                <div className="font-bold text-sm text-gray-900 dark:text-white">{fmt(mortgageReg)}</div>
-                <div className="text-xs text-gray-400 mt-0.5">Flat fee — Land Services VIC</div>
-              </div>
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-100 dark:border-blue-800">
-                <div className="text-xs text-blue-600 dark:text-blue-300 mb-1 font-medium">Total Govt. Fees</div>
-                <div className="font-bold text-sm text-blue-700 dark:text-blue-300">{fmt(totalGovt)}</div>
-                {bd.concessionType !== 'full' && (
-                  <div className="text-xs text-green-500 mt-0.5">Save {fmt(bd.fullDuty - bd.afterConcession)} (FHB)</div>
-                )}
-              </div>
-            </div>
-
-            {/* Stamp duty tier breakdown */}
-            <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Stamp Duty Calculation</h4>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Tier (Dutiable Value)</th>
-                      <th className="text-right px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Amount in Tier</th>
-                      <th className="text-right px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Rate</th>
-                      <th className="text-right px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Duty</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bd.steps.map((s, i) => (
-                      <tr key={i} className="border-b border-gray-50 dark:border-gray-700/50 last:border-0">
-                        <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{s.tier}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-gray-600 dark:text-gray-400">{fmt(s.excess)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums text-gray-600 dark:text-gray-400">{s.rate}</td>
-                        <td className="px-3 py-2 text-right tabular-nums font-medium text-gray-900 dark:text-white">{fmt(s.amount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50">
-                      <td colSpan={3} className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-200">Full Standard Duty</td>
-                      <td className="px-3 py-2 text-right tabular-nums font-bold text-gray-900 dark:text-white">{fmt(bd.fullDuty)}</td>
-                    </tr>
-                    {bd.concessionType !== 'full' && (
-                      <tr className="bg-gray-50 dark:bg-gray-700/50">
-                        <td colSpan={3} className="px-3 py-2 font-semibold"
-                          style={{ color: bd.concessionType === 'exempt' ? '#16a34a' : '#d97706' }}
-                        >
-                          {bd.concessionType === 'exempt'
-                            ? 'FHB Exemption (≤$600k)'
-                            : `FHB Concession — scaled by ${(((selectedPrice - 600000) / 150000) * 100).toFixed(1)}%`}
-                        </td>
-                        <td className="px-3 py-2 text-right tabular-nums font-bold"
-                          style={{ color: bd.concessionType === 'exempt' ? '#16a34a' : '#d97706' }}
-                        >
-                          {bd.concessionType === 'exempt' ? 'Exempt ($0)' : fmt(bd.afterConcession)}
-                        </td>
-                      </tr>
-                    )}
-                    <tr className="border-t border-gray-200 dark:border-gray-600 bg-blue-50 dark:bg-blue-900/20">
-                      <td colSpan={3} className="px-3 py-2 font-bold text-gray-800 dark:text-gray-100">+ Title Transfer Registration</td>
-                      <td className="px-3 py-2 text-right tabular-nums font-bold text-gray-900 dark:text-white">{fmt(transferReg)}</td>
-                    </tr>
-                    <tr className="bg-blue-50 dark:bg-blue-900/20">
-                      <td colSpan={3} className="px-3 py-2 font-bold text-gray-800 dark:text-gray-100">+ Mortgage Registration</td>
-                      <td className="px-3 py-2 text-right tabular-nums font-bold text-gray-900 dark:text-white">{fmt(mortgageReg)}</td>
-                    </tr>
-                    <tr className="bg-blue-100 dark:bg-blue-900/40 border-t-2 border-blue-300 dark:border-blue-700">
-                      <td colSpan={3} className="px-3 py-2 font-bold text-blue-800 dark:text-blue-200">Total Government Fees</td>
-                      <td className="px-3 py-2 text-right tabular-nums font-bold text-blue-800 dark:text-blue-200">{fmt(totalGovt)}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Sources:{' '}
-              <a href="https://www.sro.vic.gov.au/about-us/rates-and-statistics/current-rates/land-transfer-duty-non-principal-place-residence-current-rates" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">SRO VIC stamp duty rates</a>
-              {' '}·{' '}
-              <a href="https://www.sro.vic.gov.au/buying-property/land-transfer-stamp-duty/concessions-exemptions-and-waivers/first-home-buyers/first-home-buyer-duty-exemption-or-concession" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">FHB concession</a>
-              {' '}·{' '}
-              <a href="https://www.lsv.com.au/fees-and-charges" target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-400">Land Services VIC registration fees</a>
-            </p>
-          </div>
-        );
-      })()}
-
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        * Government Fees = Stamp Duty (FHB concession applied) + Title Transfer Registration Fee + Mortgage Registration Fee ($122 flat).
+        * Stamp Duty (FHB concession applied) is the sole government fee in the table. Bank Fees include your lender's fees + Title Transfer Registration + Mortgage Registration Fee ($122 flat — Land Services VIC).
         Stamp duty per{' '}
         <a
           href="https://www.sro.vic.gov.au/buying-property/land-transfer-stamp-duty/concessions-exemptions-and-waivers/first-home-buyers/first-home-buyer-duty-exemption-or-concession"
